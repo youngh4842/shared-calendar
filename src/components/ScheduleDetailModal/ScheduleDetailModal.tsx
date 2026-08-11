@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Schedule } from "@/types/schedule";
-import { formatKoreaDateTime } from "@/utils/date";
+import { formatKoreaDate } from "@/utils/date";
 import { scheduleLabels } from "@/utils/scheduleColors";
 
 type Props = {
@@ -44,12 +44,8 @@ export function ScheduleDetailModal({ schedule, onClose, onEdit, onDelete }: Pro
 
         <dl className="grid gap-3 text-sm">
           <div className="grid grid-cols-[5rem_1fr] gap-3">
-            <dt className="font-semibold text-slate-500">시작</dt>
-            <dd className="text-slate-900">{formatKoreaDateTime(schedule.startAt, schedule.allDay)}</dd>
-          </div>
-          <div className="grid grid-cols-[5rem_1fr] gap-3">
-            <dt className="font-semibold text-slate-500">종료</dt>
-            <dd className="text-slate-900">{formatKoreaDateTime(schedule.endAt, schedule.allDay)}</dd>
+            <dt className="font-semibold text-slate-500">날짜</dt>
+            <dd className="text-slate-900">{formatKoreaDate(schedule.scheduleDate)}</dd>
           </div>
           <div className="grid grid-cols-[5rem_1fr] gap-3">
             <dt className="font-semibold text-slate-500">등록</dt>

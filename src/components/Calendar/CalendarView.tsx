@@ -10,9 +10,11 @@ import { ScheduleDetailModal } from "@/components/ScheduleDetailModal/ScheduleDe
 import { ScheduleModal } from "@/components/ScheduleModal/ScheduleModal";
 import type { CalendarUser, Schedule } from "@/types/schedule";
 import { scheduleColors } from "@/utils/scheduleColors";
+import { subtractOneDay } from "@/utils/date";
 
 type Props = {
-  currentUser: CalendarUser;
+  currentUser: CalendarUser | null;
+  onSelectUser: (user: CalendarUser) => void;
 };
 
 type ModalState =
@@ -21,7 +23,7 @@ type ModalState =
   | { mode: "detail"; schedule: Schedule }
   | null;
 
-export function CalendarView({ currentUser }: Props) {
+export function CalendarView({ currentUser, onSelectUser }: Props) {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [modal, setModal] = useState<ModalState>(null);
   const [lastRange, setLastRange] = useState<{ start: string; end: string } | null>(null);
@@ -61,9 +63,8 @@ export function CalendarView({ currentUser }: Props) {
         return {
           id: String(schedule.id),
           title: schedule.title,
-          start: schedule.startAt,
-          end: schedule.endAt,
-          allDay: schedule.allDay,
+          start: schedule.scheduleDate,
+          allDay: true,
           backgroundColor: colors.background,
           borderColor: colors.border,
           textColor: colors.text,
@@ -78,7 +79,7 @@ export function CalendarView({ currentUser }: Props) {
   function handleDatesSet(arg: DatesSetArg) {
     const range = {
       start: arg.startStr,
-      end: arg.endStr
+      end: subtractOneDay(arg.endStr)
     };
     setLastRange(range);
     void fetchSchedules(range.start, range.end);
@@ -107,13 +108,29 @@ export function CalendarView({ currentUser }: Props) {
     <section className="rounded-lg border border-white/70 bg-white/90 p-3 shadow-sm sm:p-5">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-2 text-sm font-medium text-slate-700">
-          <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2.5 py-1 text-blue-700">
+          <button
+            type="button"
+            onClick={() => onSelectUser("A")}
+            className={[
+              "inline-flex h-9 items-center gap-1 rounded-md border px-3 text-blue-700 transition",
+              currentUser === "A" ? "border-blue-500 bg-blue-100 shadow-sm" : "border-blue-100 bg-blue-50 hover:bg-blue-100"
+            ].join(" ")}
+            aria-pressed={currentUser === "A"}
+          >
             <span className="h-2.5 w-2.5 rounded-full bg-[#2f80ed]" /> A
-          </span>
-          <span className="inline-flex items-center gap-1 rounded-md bg-violet-50 px-2.5 py-1 text-violet-700">
+          </button>
+          <button
+            type="button"
+            onClick={() => onSelectUser("B")}
+            className={[
+              "inline-flex h-9 items-center gap-1 rounded-md border px-3 text-violet-700 transition",
+              currentUser === "B" ? "border-violet-500 bg-violet-100 shadow-sm" : "border-violet-100 bg-violet-50 hover:bg-violet-100"
+            ].join(" ")}
+            aria-pressed={currentUser === "B"}
+          >
             <span className="h-2.5 w-2.5 rounded-full bg-[#8b5cf6]" /> B
-          </span>
-          <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2.5 py-1 text-emerald-700">
+          </button>
+          <span className="inline-flex h-9 items-center gap-1 rounded-md border border-emerald-100 bg-emerald-50 px-3 text-emerald-700">
             <span className="h-2.5 w-2.5 rounded-full bg-[#22a06b]" /> 같이
           </span>
         </div>

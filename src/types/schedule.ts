@@ -4,10 +4,8 @@ export type ScheduleType = "A" | "B" | "COMMON";
 
 export type Schedule = {
   id: number;
+  scheduleDate: string;
   title: string;
-  startAt: string;
-  endAt: string;
-  allDay: boolean;
   scheduleType: ScheduleType;
   createdBy: CalendarUser;
   memo: string | null;
@@ -16,10 +14,8 @@ export type Schedule = {
 };
 
 export type ScheduleInput = {
+  scheduleDate: string;
   title: string;
-  startAt: string;
-  endAt: string;
-  allDay: boolean;
   scheduleType: ScheduleType;
   createdBy: CalendarUser;
   memo?: string | null;

@@ -55,14 +55,12 @@ export async function PUT(request: Request, context: RouteContext) {
     const sql = getSql();
     const rows = await sql`
       UPDATE schedules
-      SET title = ${data.title},
-          start_at = ${data.startAt}::timestamptz,
-          end_at = ${data.endAt}::timestamptz,
-          all_day = ${data.allDay},
+      SET schedule_date = ${data.scheduleDate}::date,
+          title = ${data.title},
           schedule_type = ${data.scheduleType},
           created_by = ${data.createdBy},
           memo = ${data.memo},
-          updated_at = NOW()
+          updated_at = CURRENT_TIMESTAMP
       WHERE id = ${scheduleId}
       RETURNING *
     `;
