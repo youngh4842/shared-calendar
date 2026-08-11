@@ -10,7 +10,7 @@ import { ScheduleDetailModal } from "@/components/ScheduleDetailModal/ScheduleDe
 import { ScheduleModal } from "@/components/ScheduleModal/ScheduleModal";
 import type { CalendarUser, Schedule } from "@/types/schedule";
 import { scheduleColors } from "@/utils/scheduleColors";
-import { subtractOneDay } from "@/utils/date";
+import { normalizeCalendarDate, subtractOneDay } from "@/utils/date";
 
 type Props = {
   currentUser: CalendarUser | null;
@@ -78,15 +78,21 @@ export function CalendarView({ currentUser, onSelectUser }: Props) {
 
   function handleDatesSet(arg: DatesSetArg) {
     const range = {
-      start: arg.startStr,
+      start: normalizeCalendarDate(arg.startStr),
       end: subtractOneDay(arg.endStr)
     };
+
+    if (!range.start || !range.end) {
+      setError("캘린더 날짜 범위를 계산하지 못했습니다.");
+      return;
+    }
+
     setLastRange(range);
     void fetchSchedules(range.start, range.end);
   }
 
   function handleDateClick(arg: DateClickArg) {
-    setModal({ mode: "create", date: arg.dateStr });
+    setModal({ mode: "create", date: normalizeCalendarDate(arg.dateStr) });
   }
 
   function handleEventClick(arg: EventClickArg) {

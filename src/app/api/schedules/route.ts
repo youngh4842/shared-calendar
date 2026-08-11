@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { ensureSchedulesTable, getSql } from "@/lib/db";
 import { logApiError } from "@/lib/log";
 import { mapSchedule, validateScheduleInput } from "@/lib/schedule";
+import { isValidScheduleDate } from "@/utils/date";
 
 export async function GET(request: Request) {
   try {
@@ -11,6 +12,10 @@ export async function GET(request: Request) {
     const start = searchParams.get("start");
     const end = searchParams.get("end");
     const sql = getSql();
+
+    if ((start && !isValidScheduleDate(start)) || (end && !isValidScheduleDate(end))) {
+      return NextResponse.json({ error: "조회 날짜 범위가 올바르지 않습니다." }, { status: 400 });
+    }
 
     const rows = start && end
       ? await sql`
