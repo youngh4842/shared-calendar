@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+:root {
+  --page-bg: #f7f4ef;
+  --panel: #ffffff;
+  --line: #e4ded4;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--page-bg);
+  color: #0f172a;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.fc {
+  --fc-border-color: #e5e7eb;
+  --fc-today-bg-color: #eff6ff;
+  --fc-page-bg-color: #ffffff;
+  --fc-neutral-bg-color: #f8fafc;
+  --fc-list-event-hover-bg-color: #f8fafc;
+}
+
+.fc .fc-toolbar.fc-header-toolbar {
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.fc .fc-toolbar-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.fc .fc-button {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: none;
+  padding: 0.42rem 0.7rem;
+}
+
+.fc .fc-button:hover,
+.fc .fc-button:focus {
+  border-color: #94a3b8;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  border-color: #334155;
+  background: #334155;
+  color: #ffffff;
+}
+
+.fc .fc-daygrid-day-frame {
+  min-height: 6.5rem;
+}
+
+.fc .fc-daygrid-day-number {
+  padding: 0.45rem;
+  color: #334155;
+  font-size: 0.85rem;
+}
+
+.fc .fc-col-header-cell-cushion {
+  padding: 0.5rem 0;
+  color: #475569;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.fc .fc-event {
+  border-radius: 6px;
+  border-width: 1px;
+  padding: 1px 4px;
+  font-size: 0.78rem;
+}
+
+@media (max-width: 640px) {
+  .fc .fc-toolbar.fc-header-toolbar {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .fc .fc-toolbar-chunk {
+    display: flex;
+    justify-content: center;
+  }
+
+  .fc .fc-daygrid-day-frame {
+    min-height: 5.6rem;
+  }
+
+  .fc .fc-event {
+    font-size: 0.72rem;
+  }
+}
