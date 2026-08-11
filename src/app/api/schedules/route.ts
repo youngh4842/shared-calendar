@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ensureSchedulesTable, getSql } from "@/lib/db";
+import { logApiError } from "@/lib/log";
 import { mapSchedule, validateScheduleInput } from "@/lib/schedule";
 
 export async function GET(request: Request) {
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(rows.map(mapSchedule));
   } catch (error) {
-    console.error(error);
+    logApiError("[api/schedules] GET failed", error);
     return NextResponse.json({ error: "일정을 불러오지 못했습니다." }, { status: 500 });
   }
 }
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(mapSchedule(rows[0]), { status: 201 });
   } catch (error) {
-    console.error(error);
+    logApiError("[api/schedules] POST failed", error);
     return NextResponse.json({ error: "일정을 등록하지 못했습니다." }, { status: 500 });
   }
 }

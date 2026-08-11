@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ensureSchedulesTable, getSql } from "@/lib/db";
+import { logApiError } from "@/lib/log";
 import { mapSchedule, validateScheduleInput } from "@/lib/schedule";
 
 type RouteContext = {
@@ -30,7 +31,7 @@ export async function GET(_request: Request, context: RouteContext) {
 
     return NextResponse.json(mapSchedule(rows[0]));
   } catch (error) {
-    console.error(error);
+    logApiError("[api/schedules/:id] GET failed", error);
     return NextResponse.json({ error: "일정을 불러오지 못했습니다." }, { status: 500 });
   }
 }
@@ -72,7 +73,7 @@ export async function PUT(request: Request, context: RouteContext) {
 
     return NextResponse.json(mapSchedule(rows[0]));
   } catch (error) {
-    console.error(error);
+    logApiError("[api/schedules/:id] PUT failed", error);
     return NextResponse.json({ error: "일정을 수정하지 못했습니다." }, { status: 500 });
   }
 }
@@ -96,7 +97,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error(error);
+    logApiError("[api/schedules/:id] DELETE failed", error);
     return NextResponse.json({ error: "일정을 삭제하지 못했습니다." }, { status: 500 });
   }
 }
