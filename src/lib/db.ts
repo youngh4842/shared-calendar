@@ -112,10 +112,15 @@ export async function ensureSchedulesTable() {
             SELECT 1
             FROM pg_constraint
             WHERE conname = 'chk_schedule_type'
+              AND conrelid = 'schedules'::regclass
           ) THEN
-            ALTER TABLE schedules
-            ADD CONSTRAINT chk_schedule_type
-            CHECK (schedule_type IS NULL OR schedule_type IN ('A', 'B', 'COMMON'));
+            BEGIN
+              ALTER TABLE schedules
+              ADD CONSTRAINT chk_schedule_type
+              CHECK (schedule_type IS NULL OR schedule_type IN ('A', 'B', 'COMMON'));
+            EXCEPTION WHEN duplicate_object THEN
+              NULL;
+            END;
           END IF;
         END $$;
       `;
@@ -126,10 +131,15 @@ export async function ensureSchedulesTable() {
             SELECT 1
             FROM pg_constraint
             WHERE conname = 'chk_schedule_color'
+              AND conrelid = 'schedules'::regclass
           ) THEN
-            ALTER TABLE schedules
-            ADD CONSTRAINT chk_schedule_color
-            CHECK (color_key IS NULL OR color_key IN ('sky', 'purple', 'pink', 'yellow', 'lime', 'gray'));
+            BEGIN
+              ALTER TABLE schedules
+              ADD CONSTRAINT chk_schedule_color
+              CHECK (color_key IS NULL OR color_key IN ('sky', 'purple', 'pink', 'yellow', 'lime', 'gray'));
+            EXCEPTION WHEN duplicate_object THEN
+              NULL;
+            END;
           END IF;
         END $$;
       `;
@@ -140,10 +150,15 @@ export async function ensureSchedulesTable() {
             SELECT 1
             FROM pg_constraint
             WHERE conname = 'chk_confirmation_status'
+              AND conrelid = 'schedules'::regclass
           ) THEN
-            ALTER TABLE schedules
-            ADD CONSTRAINT chk_confirmation_status
-            CHECK (confirmation_status IN ('CONFIRMED', 'TENTATIVE'));
+            BEGIN
+              ALTER TABLE schedules
+              ADD CONSTRAINT chk_confirmation_status
+              CHECK (confirmation_status IN ('CONFIRMED', 'TENTATIVE'));
+            EXCEPTION WHEN duplicate_object THEN
+              NULL;
+            END;
           END IF;
         END $$;
       `;
@@ -154,10 +169,15 @@ export async function ensureSchedulesTable() {
             SELECT 1
             FROM pg_constraint
             WHERE conname = 'chk_schedule_date_range'
+              AND conrelid = 'schedules'::regclass
           ) THEN
-            ALTER TABLE schedules
-            ADD CONSTRAINT chk_schedule_date_range
-            CHECK (end_date >= start_date);
+            BEGIN
+              ALTER TABLE schedules
+              ADD CONSTRAINT chk_schedule_date_range
+              CHECK (end_date >= start_date);
+            EXCEPTION WHEN duplicate_object THEN
+              NULL;
+            END;
           END IF;
         END $$;
       `;
@@ -231,10 +251,15 @@ export async function ensureCalendarSettingsTable() {
             SELECT 1
             FROM pg_constraint
             WHERE conname = 'chk_calendar_setting_color'
+              AND conrelid = 'calendar_settings'::regclass
           ) THEN
-            ALTER TABLE calendar_settings
-            ADD CONSTRAINT chk_calendar_setting_color
-            CHECK (color_key IN ('sky', 'purple', 'pink', 'yellow', 'lime', 'gray'));
+            BEGIN
+              ALTER TABLE calendar_settings
+              ADD CONSTRAINT chk_calendar_setting_color
+              CHECK (color_key IN ('sky', 'purple', 'pink', 'yellow', 'lime', 'gray'));
+            EXCEPTION WHEN duplicate_object THEN
+              NULL;
+            END;
           END IF;
         END $$;
       `;
