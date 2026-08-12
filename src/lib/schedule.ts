@@ -45,6 +45,7 @@ export function validateScheduleInput(value: unknown): { ok: true; data: Schedul
   const confirmationStatus = body.confirmationStatus as ConfirmationStatus;
   const memo = typeof body.memo === "string" && body.memo.trim() ? body.memo.trim() : null;
 
+  if (!scheduleDate) return { ok: false, error: "날짜를 선택해주세요." };
   if (!datePattern.test(scheduleDate) || Number.isNaN(Date.parse(`${scheduleDate}T00:00:00+09:00`))) {
     return { ok: false, error: "일정 날짜가 올바르지 않습니다." };
   }

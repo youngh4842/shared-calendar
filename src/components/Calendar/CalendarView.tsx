@@ -5,7 +5,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import type { DateClickArg } from "@fullcalendar/interaction";
 import type { DatesSetArg, EventClickArg, EventInput } from "@fullcalendar/core";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { ScheduleDetailModal } from "@/components/ScheduleDetailModal/ScheduleDetailModal";
 import { ScheduleModal } from "@/components/ScheduleModal/ScheduleModal";
 import type { Schedule } from "@/types/schedule";
@@ -18,10 +18,14 @@ type ModalState =
   | { mode: "detail"; schedule: Schedule }
   | null;
 
+const weekdays = ["월", "화", "수", "목", "금", "토", "일"];
+
 export function CalendarView() {
+  const calendarRef = useRef<FullCalendar | null>(null);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [modal, setModal] = useState<ModalState>(null);
   const [lastRange, setLastRange] = useState<{ start: string; end: string } | null>(null);
+  const [currentTitle, setCurrentTitle] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -74,6 +78,8 @@ export function CalendarView() {
   );
 
   function handleDatesSet(arg: DatesSetArg) {
+    setCurrentTitle(arg.view.title);
+
     const range = {
       start: normalizeCalendarDate(arg.startStr),
       end: subtractOneDay(arg.endStr)
@@ -86,6 +92,16 @@ export function CalendarView() {
 
     setLastRange(range);
     void fetchSchedules(range.start, range.end);
+  }
+
+  function moveMonth(direction: "prev" | "next") {
+    const api = calendarRef.current?.getApi();
+    if (direction === "prev") {
+      api?.prev();
+      return;
+    }
+
+    api?.next();
   }
 
   function handleDateClick(arg: DateClickArg) {
@@ -109,24 +125,41 @@ export function CalendarView() {
 
   return (
     <section className="rounded-lg border border-white/70 bg-white/90 p-3 shadow-sm sm:p-5">
-      <div className="mb-3 flex justify-end">
-        {loading ? <p className="text-sm text-slate-500">일정을 불러오는 중...</p> : null}
+      <div className="calendar-sticky-header">
+        <div className="calendar-sticky-toolbar">
+          <button type="button" onClick={() => moveMonth("prev")} className="calendar-nav-button" aria-label="이전 달">
+            &lt;
+          </button>
+          <div className="calendar-title" aria-live="polite">
+            {currentTitle}
+          </div>
+          <button type="button" onClick={() => moveMonth("next")} className="calendar-nav-button" aria-label="다음 달">
+            &gt;
+          </button>
+        </div>
+        <div className="calendar-weekdays" aria-hidden="true">
+          {weekdays.map((day) => (
+            <div key={day} className="calendar-weekday">
+              {day}
+            </div>
+          ))}
+        </div>
       </div>
+
+      {loading ? <p className="my-3 text-right text-sm text-slate-500">일정을 불러오는 중...</p> : null}
 
       {error ? (
         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       ) : null}
 
       <FullCalendar
+        ref={calendarRef}
         plugins={[dayGridPlugin, interactionPlugin]}
         initialView="dayGridMonth"
         locale="ko"
         timeZone="Asia/Seoul"
-        headerToolbar={{
-          left: "prev",
-          center: "title",
-          right: "next"
-        }}
+        headerToolbar={false}
+        dayHeaders={false}
         firstDay={1}
         height="auto"
         selectable

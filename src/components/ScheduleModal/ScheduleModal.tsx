@@ -60,6 +60,11 @@ export function ScheduleModal(props: Props) {
     event.preventDefault();
     setError(null);
 
+    if (!scheduleDate) {
+      setError("날짜를 선택해주세요.");
+      return;
+    }
+
     if (!title.trim()) {
       setError("제목을 입력해주세요.");
       return;
@@ -110,7 +115,7 @@ export function ScheduleModal(props: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/45 px-3 py-4 sm:items-center">
-      <form onSubmit={handleSubmit} className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-5 shadow-xl">
+      <form noValidate onSubmit={handleSubmit} className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-5 shadow-xl">
         <div className="mb-5 flex items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-slate-950">{props.mode === "edit" ? "일정 수정" : "일정 등록"}</h2>
           <button type="button" onClick={props.onClose} className="rounded-md px-3 py-1.5 text-sm font-semibold text-slate-500 hover:bg-slate-100">
@@ -120,7 +125,7 @@ export function ScheduleModal(props: Props) {
 
         <div className="grid gap-4">
           <label className="grid gap-1.5 text-sm font-medium text-slate-700">
-            날짜
+            날짜 *
             <input type="date" value={scheduleDate} onChange={(event) => setScheduleDate(event.target.value)} className="h-11 rounded-md border border-slate-300 px-3 outline-none focus:border-slate-500" required />
           </label>
 
@@ -130,7 +135,7 @@ export function ScheduleModal(props: Props) {
           </label>
 
           <fieldset className="grid gap-2">
-            <legend className="text-sm font-medium text-slate-700">일정 구분</legend>
+            <legend className="text-sm font-medium text-slate-700">일정 구분 *</legend>
             <div className="grid grid-cols-3 gap-2">
               {scheduleTypeOptions.map((option) => {
                 const colors = scheduleColors[option];
@@ -156,7 +161,7 @@ export function ScheduleModal(props: Props) {
           </fieldset>
 
           <fieldset className="grid gap-2">
-            <legend className="text-sm font-medium text-slate-700">확정 여부</legend>
+            <legend className="text-sm font-medium text-slate-700">확정 구분 *</legend>
             <div className="grid grid-cols-2 gap-2">
               {confirmationOptions.map((option) => {
                 const selected = confirmationStatus === option;
