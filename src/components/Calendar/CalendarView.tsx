@@ -10,7 +10,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ScheduleDetailModal } from "@/components/ScheduleDetailModal/ScheduleDetailModal";
 import { ScheduleModal } from "@/components/ScheduleModal/ScheduleModal";
 import type { Holiday } from "@/types/holiday";
-import type { CalendarSetting, Schedule } from "@/types/schedule";
+import type { CalendarSetting, Schedule, ScheduleType } from "@/types/schedule";
 import { defaultCalendarSettings, getSchedulePalette, toSettingsRecord } from "@/utils/scheduleColors";
 import { addOneDay, formatCalendarDate, normalizeCalendarDate, subtractOneDay } from "@/utils/date";
 
@@ -49,7 +49,7 @@ export function CalendarView() {
   const calendarRef = useRef<FullCalendar | null>(null);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [holidaysByDate, setHolidaysByDate] = useState<Record<string, Holiday>>({});
-  const [settings, setSettings] = useState<Record<Schedule["scheduleType"], CalendarSetting>>(defaultCalendarSettings);
+  const [settings, setSettings] = useState<Record<ScheduleType, CalendarSetting>>(defaultCalendarSettings);
   const [modal, setModal] = useState<ModalState>(null);
   const [lastRange, setLastRange] = useState<{ start: string; end: string } | null>(null);
   const [currentTitle, setCurrentTitle] = useState("");
@@ -138,7 +138,7 @@ export function CalendarView() {
   const events = useMemo<EventInput[]>(
     () =>
       schedules.map((schedule) => {
-        const colors = getSchedulePalette(settings, schedule.scheduleType);
+        const colors = getSchedulePalette(settings, schedule.scheduleType, schedule.colorKey);
         const isTentative = schedule.confirmationStatus === "TENTATIVE";
         return {
           id: String(schedule.id),

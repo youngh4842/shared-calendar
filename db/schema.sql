@@ -3,13 +3,15 @@ CREATE TABLE IF NOT EXISTS schedules (
   start_date DATE NOT NULL,
   end_date DATE NOT NULL,
   title VARCHAR(200) NOT NULL,
-  schedule_type VARCHAR(10) NOT NULL,
+  schedule_type VARCHAR(10),
   confirmation_status VARCHAR(10) NOT NULL DEFAULT 'CONFIRMED',
+  color_key VARCHAR(20),
   memo TEXT,
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT chk_schedule_type CHECK (schedule_type IN ('A', 'B', 'COMMON')),
+  CONSTRAINT chk_schedule_type CHECK (schedule_type IS NULL OR schedule_type IN ('A', 'B', 'COMMON')),
   CONSTRAINT chk_confirmation_status CHECK (confirmation_status IN ('CONFIRMED', 'TENTATIVE')),
+  CONSTRAINT chk_schedule_color CHECK (color_key IS NULL OR color_key IN ('sky', 'purple', 'pink', 'yellow', 'lime', 'gray')),
   CONSTRAINT chk_schedule_date_range CHECK (end_date >= start_date)
 );
 

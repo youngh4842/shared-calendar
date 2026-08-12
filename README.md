@@ -6,11 +6,12 @@
 
 ## 주요 기능
 
-- 월간 캘린더에서 A, B, 같이 일정을 함께 확인
+- 월간 캘린더에서 A, B, 같이 또는 구분 없는 일정을 함께 확인
 - 일정 등록, 수정, 삭제
 - 하루 일정과 기간 일정 등록
-- 일정 구분: `A`, `B`, `COMMON`
+- 일정 구분: `A`, `B`, `COMMON`, 미선택
 - 확정 구분: `CONFIRMED`, `TENTATIVE`
+- 일정별 개별 색상: `sky`, `purple`, `pink`, `yellow`, `lime`, `gray`
 - 메모는 선택 입력
 - 스크롤 시 월 이동/년월 영역과 월~일 요일 영역이 함께 sticky 고정
 - `/settings`에서 일정 구분별 표시 이름과 색상 변경
@@ -26,24 +27,26 @@
 - 일정 등록/수정 필수값을 명확화
 - `calendar_settings` 테이블과 `/api/settings`를 추가해 표시 이름과 색상 설정을 저장
 - `/api/holidays`를 추가해 대한민국 공휴일 표시
+- 일정 구분은 선택값으로 변경하고, 각 일정이 개별 `color_key`를 저장하도록 변경
+- A/B/같이 색상 설정은 새 일정에서 해당 구분을 선택했을 때의 기본 색상으로 사용
 
 필수값:
 
 - 날짜 *
 - 제목 *
-- 일정 구분 *
 - 확정 구분 *
 
 선택값:
 
+- 일정 구분
 - 메모
+- 색상은 기본값 `gray`가 자동 선택되므로 별도 필수 오류를 표시하지 않음
 
 Validation 순서:
 
 1. 날짜
 2. 제목
-3. 일정 구분
-4. 확정 구분
+3. 확정 구분
 5. 정상인 경우 저장
 
 API에서도 필수값이 누락되거나 허용되지 않는 값이 들어오면 `400 Bad Request`를 반환합니다.
@@ -81,6 +84,8 @@ start_date DATE NOT NULL
 end_date DATE NOT NULL
 title VARCHAR(200) NOT NULL
 confirmation_status VARCHAR(10) NOT NULL
+schedule_type VARCHAR(10)
+color_key VARCHAR(20)
 ```
 
 ## API
@@ -102,16 +107,18 @@ confirmation_status VARCHAR(10) NOT NULL
   "startDate": "2026-08-15",
   "endDate": "2026-08-17",
   "title": "일정 제목",
-  "scheduleType": "COMMON",
+  "scheduleType": null,
   "confirmationStatus": "CONFIRMED",
+  "colorKey": "pink",
   "memo": ""
 }
 ```
 
 허용 값:
 
-- `scheduleType`: `A`, `B`, `COMMON`
+- `scheduleType`: `A`, `B`, `COMMON`, `null`
 - `confirmationStatus`: `CONFIRMED`, `TENTATIVE`
+- `colorKey`: `sky`, `purple`, `pink`, `yellow`, `lime`, `gray`
 
 기간 조건:
 
@@ -123,7 +130,7 @@ Validation 메시지:
 
 - 날짜 없음: `날짜를 선택해주세요.`
 - 제목 없음 또는 공백만 입력: `제목을 입력해주세요.`
-- 일정 구분 없음 또는 잘못된 값: `일정 구분을 선택해주세요.`
+- 일정 구분 잘못된 값: `일정 구분을 선택해주세요.`
 - 확정 구분 없음 또는 잘못된 값: `확정 여부를 선택해주세요.`
 - 종료일이 시작일보다 빠름: `종료일은 시작일 이후 날짜를 선택해주세요.`
 

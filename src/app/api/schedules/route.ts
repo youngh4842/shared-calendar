@@ -50,13 +50,14 @@ export async function POST(request: Request) {
     const data = validation.data;
     const sql = getSql();
     const rows = await sql`
-      INSERT INTO schedules (start_date, end_date, title, schedule_type, confirmation_status, memo)
+      INSERT INTO schedules (start_date, end_date, title, schedule_type, confirmation_status, color_key, memo)
       VALUES (
         ${data.startDate}::date,
         ${data.endDate}::date,
         ${data.title},
         ${data.scheduleType},
         ${data.confirmationStatus},
+        ${data.colorKey},
         ${data.memo}
       )
       RETURNING *

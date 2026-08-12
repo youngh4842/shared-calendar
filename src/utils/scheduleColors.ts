@@ -109,7 +109,11 @@ export const colorPalettes: Record<
   }
 };
 
-export function normalizeColorKey(value: string): ColorKey {
+export function normalizeColorKey(value: string | null | undefined): ColorKey {
+  if (!value) {
+    return "gray";
+  }
+
   return legacyColorKeyMap[value] ?? "gray";
 }
 
@@ -126,10 +130,19 @@ export function toSettingsRecord(settings: CalendarSetting[]): Record<ScheduleTy
   }, { ...defaultCalendarSettings });
 }
 
-export function getScheduleTypeLabel(settings: Record<ScheduleType, CalendarSetting>, scheduleType: ScheduleType) {
+export function getScheduleTypeLabel(settings: Record<ScheduleType, CalendarSetting>, scheduleType: ScheduleType | null) {
+  if (!scheduleType) {
+    return "구분 없음";
+  }
+
   return settings[scheduleType]?.displayName || defaultCalendarSettings[scheduleType].displayName;
 }
 
-export function getSchedulePalette(settings: Record<ScheduleType, CalendarSetting>, scheduleType: ScheduleType) {
-  return colorPalettes[normalizeColorKey(settings[scheduleType]?.colorKey ?? defaultCalendarSettings[scheduleType].colorKey)];
+export function getSchedulePalette(
+  settings: Record<ScheduleType, CalendarSetting>,
+  scheduleType: ScheduleType | null,
+  colorKey?: ColorKey | null
+) {
+  const resolvedColorKey = colorKey ?? (scheduleType ? settings[scheduleType]?.colorKey : null) ?? "sky";
+  return colorPalettes[normalizeColorKey(resolvedColorKey)];
 }

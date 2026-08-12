@@ -1,8 +1,8 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import type { CalendarSetting, ConfirmationStatus, Schedule, ScheduleType } from "@/types/schedule";
-import { colorPalettes, confirmationLabels, getScheduleTypeLabel, scheduleTypeOptions } from "@/utils/scheduleColors";
+import type { CalendarSetting, ColorKey, ConfirmationStatus, Schedule, ScheduleType } from "@/types/schedule";
+import { colorKeyOptions, colorLabels, colorPalettes, confirmationLabels, getScheduleTypeLabel, scheduleTypeOptions } from "@/utils/scheduleColors";
 
 type Props =
   | {
@@ -30,9 +30,11 @@ export function ScheduleModal(props: Props) {
     title: string;
     scheduleType: ScheduleType | null;
     confirmationStatus: ConfirmationStatus | null;
+    colorKey: ColorKey;
     memo: string;
   }>(() => {
     if (props.mode === "edit") {
+      const fallbackColorKey = props.schedule.scheduleType ? props.settings[props.schedule.scheduleType].colorKey : "gray";
       return {
         dateMode: props.schedule.startDate === props.schedule.endDate ? "single" : "range",
         startDate: props.schedule.startDate,
@@ -40,6 +42,7 @@ export function ScheduleModal(props: Props) {
         title: props.schedule.title,
         scheduleType: props.schedule.scheduleType,
         confirmationStatus: props.schedule.confirmationStatus,
+        colorKey: props.schedule.colorKey ?? fallbackColorKey,
         memo: props.schedule.memo ?? ""
       };
     }
@@ -51,6 +54,7 @@ export function ScheduleModal(props: Props) {
       title: "",
       scheduleType: null,
       confirmationStatus: null,
+      colorKey: "gray",
       memo: ""
     };
   }, [props]);
@@ -61,6 +65,7 @@ export function ScheduleModal(props: Props) {
   const [title, setTitle] = useState(initial.title);
   const [scheduleType, setScheduleType] = useState<ScheduleType | null>(initial.scheduleType);
   const [confirmationStatus, setConfirmationStatus] = useState<ConfirmationStatus | null>(initial.confirmationStatus);
+  const [colorKey, setColorKey] = useState<ColorKey>(initial.colorKey);
   const [memo, setMemo] = useState(initial.memo);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -77,6 +82,12 @@ export function ScheduleModal(props: Props) {
     if (dateMode === "single") {
       setEndDate(value);
     }
+  }
+
+  function handleScheduleTypeClick(option: ScheduleType) {
+    const nextScheduleType = scheduleType === option ? null : option;
+    setScheduleType(nextScheduleType);
+    setColorKey(nextScheduleType ? props.settings[nextScheduleType].colorKey : "gray");
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -100,11 +111,6 @@ export function ScheduleModal(props: Props) {
       return;
     }
 
-    if (!scheduleType) {
-      setError("일정 구분을 선택해주세요.");
-      return;
-    }
-
     if (!confirmationStatus) {
       setError("확정 여부를 선택해주세요.");
       return;
@@ -118,6 +124,7 @@ export function ScheduleModal(props: Props) {
       title,
       scheduleType,
       confirmationStatus,
+      colorKey,
       memo
     };
 
@@ -194,7 +201,7 @@ export function ScheduleModal(props: Props) {
           </label>
 
           <fieldset className="grid gap-2">
-            <legend className="text-sm font-medium text-slate-700">일정 구분 *</legend>
+            <legend className="text-sm font-medium text-slate-700">일정 구분</legend>
             <div className="grid grid-cols-3 gap-2">
               {scheduleTypeOptions.map((option) => {
                 const palette = colorPalettes[props.settings[option].colorKey];
@@ -203,7 +210,7 @@ export function ScheduleModal(props: Props) {
                   <button
                     key={option}
                     type="button"
-                    onClick={() => setScheduleType(option)}
+                    onClick={() => handleScheduleTypeClick(option)}
                     className="h-11 rounded-md border px-3 text-sm font-semibold transition"
                     style={{
                       borderColor: selected ? palette.confirmedBorder : "#cbd5e1",
@@ -236,6 +243,45 @@ export function ScheduleModal(props: Props) {
                     aria-pressed={selected}
                   >
                     {confirmationLabels[option]}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          <fieldset className="grid gap-2">
+            <legend className="text-sm font-medium text-slate-700">색상</legend>
+            <div className="grid grid-cols-6 gap-2">
+              {colorKeyOptions.map((option) => {
+                const palette = colorPalettes[option];
+                const selected = colorKey === option;
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setColorKey(option)}
+                    className="grid min-w-0 justify-items-center gap-1 rounded-md border px-1.5 py-2 text-xs font-semibold transition"
+                    style={{
+                      borderColor: selected ? palette.confirmedBorder : "#cbd5e1",
+                      backgroundColor: selected ? palette.tentativeBackground : "#ffffff",
+                      color: selected ? palette.confirmedText : "#475569",
+                      boxShadow: selected ? `0 0 0 2px ${palette.confirmedBackground}` : "none"
+                    }}
+                    aria-pressed={selected}
+                    aria-label={`${colorLabels[option]} 색상`}
+                  >
+                    <span
+                      className="flex h-6 w-6 items-center justify-center rounded-full border text-[0.7rem]"
+                      style={{
+                        borderColor: palette.confirmedBorder,
+                        backgroundColor: palette.confirmedBackground,
+                        color: palette.confirmedText
+                      }}
+                      aria-hidden="true"
+                    >
+                      {selected ? "✓" : ""}
+                    </span>
+                    <span className="truncate">{colorLabels[option]}</span>
                   </button>
                 );
               })}

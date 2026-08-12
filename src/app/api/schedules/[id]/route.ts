@@ -60,6 +60,7 @@ export async function PUT(request: Request, context: RouteContext) {
           title = ${data.title},
           schedule_type = ${data.scheduleType},
           confirmation_status = ${data.confirmationStatus},
+          color_key = ${data.colorKey},
           memo = ${data.memo},
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ${scheduleId}

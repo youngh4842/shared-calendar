@@ -9,8 +9,9 @@ export type Schedule = {
   startDate: string;
   endDate: string;
   title: string;
-  scheduleType: ScheduleType;
+  scheduleType: ScheduleType | null;
   confirmationStatus: ConfirmationStatus;
+  colorKey: ColorKey | null;
   memo: string | null;
   createdAt: string;
   updatedAt: string;
@@ -20,8 +21,9 @@ export type ScheduleInput = {
   startDate: string;
   endDate: string;
   title: string;
-  scheduleType: ScheduleType;
+  scheduleType: ScheduleType | null;
   confirmationStatus: ConfirmationStatus;
+  colorKey: ColorKey;
   memo?: string | null;
 };
 
