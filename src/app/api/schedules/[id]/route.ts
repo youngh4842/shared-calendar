@@ -58,7 +58,7 @@ export async function PUT(request: Request, context: RouteContext) {
       SET schedule_date = ${data.scheduleDate}::date,
           title = ${data.title},
           schedule_type = ${data.scheduleType},
-          created_by = ${data.createdBy},
+          confirmation_status = ${data.confirmationStatus},
           memo = ${data.memo},
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ${scheduleId}

@@ -35,7 +35,14 @@ textarea {
 .fc .fc-toolbar.fc-header-toolbar {
   align-items: center;
   gap: 0.75rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  border-bottom: 1px solid #e5e7eb;
+  background: rgba(255, 255, 255, 0.96);
+  padding: 0.65rem 0.25rem;
+  backdrop-filter: blur(8px);
 }
 
 .fc .fc-toolbar-title {
@@ -83,6 +90,13 @@ textarea {
   font-weight: 700;
 }
 
+.fc .fc-scrollgrid-section-header > th {
+  position: sticky;
+  top: 3.6rem;
+  z-index: 29;
+  background: rgba(255, 255, 255, 0.96);
+}
+
 .fc .fc-event {
   border-radius: 6px;
   border-width: 1px;
@@ -90,10 +104,21 @@ textarea {
   font-size: 0.78rem;
 }
 
+.fc .schedule-event-tentative {
+  border-style: dashed;
+  border-width: 1.5px;
+  font-weight: 600;
+}
+
+.fc .schedule-event-confirmed {
+  border-style: solid;
+}
+
 @media (max-width: 640px) {
   .fc .fc-toolbar.fc-header-toolbar {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: 2.75rem minmax(0, 1fr) 2.75rem;
+    padding: 0.55rem 0.2rem;
   }
 
   .fc .fc-toolbar-chunk {

@@ -1,6 +1,6 @@
-# 우리 캘린더
+# Shared Calendar
 
-A와 B가 함께 쓰는 2인용 공유 캘린더 MVP입니다. Next.js Route Handler가 화면과 REST API를 모두 담당하고, Neon PostgreSQL의 무료 플랜을 데이터베이스로 사용합니다.
+A/B/같이 일정을 함께 관리하는 공유 캘린더 MVP입니다. Next.js Route Handler가 화면과 REST API를 모두 담당하고, Neon PostgreSQL의 무료 플랜을 데이터베이스로 사용합니다.
 
 ## 실행 방법
 
@@ -33,4 +33,4 @@ DATABASE_URL="postgresql://USER:PASSWORD@HOST.neon.tech/DB?sslmode=require"
 - `PUT /api/schedules/{id}`
 - `DELETE /api/schedules/{id}`
 
-날짜와 시간은 한국 시간(`Asia/Seoul`) 기준 입력 흐름에 맞춰 처리합니다.
+일정은 날짜 단위로 저장하며, 확정/예정 상태에 따라 캘린더 표시 스타일이 달라집니다.

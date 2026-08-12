@@ -1,38 +1,32 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import type { CalendarUser, Schedule, ScheduleType } from "@/types/schedule";
+import type { ConfirmationStatus, Schedule, ScheduleType } from "@/types/schedule";
+import { confirmationLabels, scheduleColors, scheduleTypeButtonLabels } from "@/utils/scheduleColors";
 
 type Props =
   | {
       mode: "create";
-      currentUser: CalendarUser | null;
       initialDate: string;
       onClose: () => void;
       onSaved: () => void;
     }
   | {
       mode: "edit";
-      currentUser: CalendarUser | null;
       schedule: Schedule;
       onClose: () => void;
       onSaved: () => void;
     };
 
-export function ScheduleModal(props: Props) {
-  const effectiveUser =
-    props.currentUser ??
-    (props.mode === "edit"
-      ? props.schedule.scheduleType === "COMMON"
-        ? props.schedule.createdBy
-        : props.schedule.scheduleType
-      : null);
-  const isUserRequired = props.mode === "create" && !effectiveUser;
+const scheduleTypeOptions: ScheduleType[] = ["A", "B", "COMMON"];
+const confirmationOptions: ConfirmationStatus[] = ["CONFIRMED", "TENTATIVE"];
 
+export function ScheduleModal(props: Props) {
   const initial = useMemo<{
     scheduleDate: string;
     title: string;
-    scheduleType: ScheduleType;
+    scheduleType: ScheduleType | null;
+    confirmationStatus: ConfirmationStatus | null;
     memo: string;
   }>(() => {
     if (props.mode === "edit") {
@@ -40,6 +34,7 @@ export function ScheduleModal(props: Props) {
         scheduleDate: props.schedule.scheduleDate,
         title: props.schedule.title,
         scheduleType: props.schedule.scheduleType,
+        confirmationStatus: props.schedule.confirmationStatus,
         memo: props.schedule.memo ?? ""
       };
     }
@@ -47,14 +42,16 @@ export function ScheduleModal(props: Props) {
     return {
       scheduleDate: props.initialDate,
       title: "",
-      scheduleType: props.currentUser ?? "COMMON",
+      scheduleType: null,
+      confirmationStatus: null,
       memo: ""
     };
   }, [props]);
 
   const [scheduleDate, setScheduleDate] = useState(initial.scheduleDate);
   const [title, setTitle] = useState(initial.title);
-  const [scheduleType, setScheduleType] = useState<ScheduleType>(initial.scheduleType);
+  const [scheduleType, setScheduleType] = useState<ScheduleType | null>(initial.scheduleType);
+  const [confirmationStatus, setConfirmationStatus] = useState<ConfirmationStatus | null>(initial.confirmationStatus);
   const [memo, setMemo] = useState(initial.memo);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -63,13 +60,18 @@ export function ScheduleModal(props: Props) {
     event.preventDefault();
     setError(null);
 
-    if (!effectiveUser) {
-      setError("일정을 등록하려면 A 또는 B를 선택해주세요.");
+    if (!title.trim()) {
+      setError("제목을 입력해주세요.");
       return;
     }
 
-    if (!title.trim()) {
-      setError("제목을 입력해주세요.");
+    if (!scheduleType) {
+      setError("일정 구분을 선택해주세요.");
+      return;
+    }
+
+    if (!confirmationStatus) {
+      setError("확정 여부를 선택해주세요.");
       return;
     }
 
@@ -79,7 +81,7 @@ export function ScheduleModal(props: Props) {
       scheduleDate,
       title,
       scheduleType,
-      createdBy: effectiveUser,
+      confirmationStatus,
       memo
     };
 
@@ -116,42 +118,71 @@ export function ScheduleModal(props: Props) {
           </button>
         </div>
 
-        {isUserRequired ? (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-            일정을 등록하려면 A 또는 B를 선택해주세요.
-          </div>
-        ) : (
-          <div className="grid gap-4">
-            <label className="grid gap-1.5 text-sm font-medium text-slate-700">
-              날짜
-              <input type="date" value={scheduleDate} onChange={(event) => setScheduleDate(event.target.value)} className="h-11 rounded-md border border-slate-300 px-3 outline-none focus:border-slate-500" required />
-            </label>
+        <div className="grid gap-4">
+          <label className="grid gap-1.5 text-sm font-medium text-slate-700">
+            날짜
+            <input type="date" value={scheduleDate} onChange={(event) => setScheduleDate(event.target.value)} className="h-11 rounded-md border border-slate-300 px-3 outline-none focus:border-slate-500" required />
+          </label>
 
-            <label className="grid gap-1.5 text-sm font-medium text-slate-700">
-              제목 *
-              <input value={title} onChange={(event) => setTitle(event.target.value)} className="h-11 rounded-md border border-slate-300 px-3 text-slate-950 outline-none focus:border-slate-500" required />
-            </label>
+          <label className="grid gap-1.5 text-sm font-medium text-slate-700">
+            제목 *
+            <input value={title} onChange={(event) => setTitle(event.target.value)} className="h-11 rounded-md border border-slate-300 px-3 text-slate-950 outline-none focus:border-slate-500" required />
+          </label>
 
-            <fieldset className="grid gap-2">
-              <legend className="text-sm font-medium text-slate-700">일정 구분</legend>
-              <div className="grid grid-cols-2 gap-2">
-                <label className="flex h-11 items-center justify-center gap-2 rounded-md border border-slate-300 px-3 text-sm font-semibold">
-                  <input type="radio" name="scheduleType" checked={scheduleType === effectiveUser} onChange={() => effectiveUser && setScheduleType(effectiveUser)} />
-                  내 일정
-                </label>
-                <label className="flex h-11 items-center justify-center gap-2 rounded-md border border-slate-300 px-3 text-sm font-semibold">
-                  <input type="radio" name="scheduleType" checked={scheduleType === "COMMON"} onChange={() => setScheduleType("COMMON")} />
-                  같이 일정
-                </label>
-              </div>
-            </fieldset>
+          <fieldset className="grid gap-2">
+            <legend className="text-sm font-medium text-slate-700">일정 구분</legend>
+            <div className="grid grid-cols-3 gap-2">
+              {scheduleTypeOptions.map((option) => {
+                const colors = scheduleColors[option];
+                const selected = scheduleType === option;
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setScheduleType(option)}
+                    className="h-11 rounded-md border px-3 text-sm font-semibold transition"
+                    style={{
+                      borderColor: selected ? colors.border : "#cbd5e1",
+                      backgroundColor: selected ? colors.background : "#ffffff",
+                      color: selected ? colors.text : "#334155"
+                    }}
+                    aria-pressed={selected}
+                  >
+                    {scheduleTypeButtonLabels[option]}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
 
-            <label className="grid gap-1.5 text-sm font-medium text-slate-700">
-              메모
-              <textarea value={memo} onChange={(event) => setMemo(event.target.value)} rows={4} className="rounded-md border border-slate-300 px-3 py-2 text-slate-950 outline-none focus:border-slate-500" />
-            </label>
-          </div>
-        )}
+          <fieldset className="grid gap-2">
+            <legend className="text-sm font-medium text-slate-700">확정 여부</legend>
+            <div className="grid grid-cols-2 gap-2">
+              {confirmationOptions.map((option) => {
+                const selected = confirmationStatus === option;
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setConfirmationStatus(option)}
+                    className={[
+                      "h-11 rounded-md border px-3 text-sm font-semibold transition",
+                      selected ? "border-slate-950 bg-slate-950 text-white shadow-sm" : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                    ].join(" ")}
+                    aria-pressed={selected}
+                  >
+                    {confirmationLabels[option]}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          <label className="grid gap-1.5 text-sm font-medium text-slate-700">
+            메모
+            <textarea value={memo} onChange={(event) => setMemo(event.target.value)} rows={4} className="rounded-md border border-slate-300 px-3 py-2 text-slate-950 outline-none focus:border-slate-500" />
+          </label>
+        </div>
 
         {error ? <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
 
@@ -159,7 +190,7 @@ export function ScheduleModal(props: Props) {
           <button type="button" onClick={props.onClose} className="h-11 rounded-md border border-slate-300 font-semibold text-slate-700 hover:bg-slate-50">
             취소
           </button>
-          <button type="submit" disabled={saving || isUserRequired} className="h-11 rounded-md bg-slate-950 font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400">
+          <button type="submit" disabled={saving} className="h-11 rounded-md bg-slate-950 font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400">
             {saving ? "저장 중..." : props.mode === "edit" ? "저장" : "등록"}
           </button>
         </div>

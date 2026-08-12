@@ -21,15 +21,16 @@ export async function ensureSchedulesTable() {
         schedule_date DATE,
         title VARCHAR(200) NOT NULL,
         schedule_type VARCHAR(10) NOT NULL,
-        created_by VARCHAR(1) NOT NULL,
+        confirmation_status VARCHAR(10) NOT NULL DEFAULT 'CONFIRMED',
         memo TEXT,
         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT chk_schedule_type CHECK (schedule_type IN ('A', 'B', 'COMMON')),
-        CONSTRAINT chk_created_by CHECK (created_by IN ('A', 'B'))
+        CONSTRAINT chk_confirmation_status CHECK (confirmation_status IN ('CONFIRMED', 'TENTATIVE'))
       )
     `.then(async () => {
       await sql`ALTER TABLE schedules ADD COLUMN IF NOT EXISTS schedule_date DATE`;
+      await sql`ALTER TABLE schedules ADD COLUMN IF NOT EXISTS confirmation_status VARCHAR(10) NOT NULL DEFAULT 'CONFIRMED'`;
       await sql`
         DO $$
         BEGIN
@@ -49,7 +50,24 @@ export async function ensureSchedulesTable() {
       await sql`ALTER TABLE schedules ALTER COLUMN schedule_date SET NOT NULL`;
       await sql`ALTER TABLE schedules ALTER COLUMN title TYPE VARCHAR(200)`;
       await sql`ALTER TABLE schedules ALTER COLUMN schedule_type TYPE VARCHAR(10)`;
-      await sql`ALTER TABLE schedules ALTER COLUMN created_by TYPE VARCHAR(1)`;
+      await sql`ALTER TABLE schedules ALTER COLUMN confirmation_status TYPE VARCHAR(10)`;
+      await sql`UPDATE schedules SET confirmation_status = 'CONFIRMED' WHERE confirmation_status IS NULL`;
+      await sql`ALTER TABLE schedules ALTER COLUMN confirmation_status SET DEFAULT 'CONFIRMED'`;
+      await sql`ALTER TABLE schedules ALTER COLUMN confirmation_status SET NOT NULL`;
+      await sql`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1
+            FROM pg_constraint
+            WHERE conname = 'chk_confirmation_status'
+          ) THEN
+            ALTER TABLE schedules
+            ADD CONSTRAINT chk_confirmation_status
+            CHECK (confirmation_status IN ('CONFIRMED', 'TENTATIVE'));
+          END IF;
+        END $$;
+      `;
       await sql`
         DO $$
         BEGIN
@@ -77,6 +95,7 @@ export async function ensureSchedulesTable() {
       await sql`ALTER TABLE schedules DROP COLUMN IF EXISTS start_at`;
       await sql`ALTER TABLE schedules DROP COLUMN IF EXISTS end_at`;
       await sql`ALTER TABLE schedules DROP COLUMN IF EXISTS all_day`;
+      await sql`ALTER TABLE schedules DROP COLUMN IF EXISTS created_by`;
       await sql`DROP INDEX IF EXISTS schedules_range_idx`;
       await sql`CREATE INDEX IF NOT EXISTS schedules_date_idx ON schedules (schedule_date, id)`;
     });

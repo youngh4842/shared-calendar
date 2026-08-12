@@ -8,14 +8,9 @@ import type { DatesSetArg, EventClickArg, EventInput } from "@fullcalendar/core"
 import { useCallback, useMemo, useState } from "react";
 import { ScheduleDetailModal } from "@/components/ScheduleDetailModal/ScheduleDetailModal";
 import { ScheduleModal } from "@/components/ScheduleModal/ScheduleModal";
-import type { CalendarUser, Schedule } from "@/types/schedule";
+import type { Schedule } from "@/types/schedule";
 import { scheduleColors } from "@/utils/scheduleColors";
 import { normalizeCalendarDate, subtractOneDay } from "@/utils/date";
-
-type Props = {
-  currentUser: CalendarUser | null;
-  onSelectUser: (user: CalendarUser) => void;
-};
 
 type ModalState =
   | { mode: "create"; date: string }
@@ -23,7 +18,7 @@ type ModalState =
   | { mode: "detail"; schedule: Schedule }
   | null;
 
-export function CalendarView({ currentUser, onSelectUser }: Props) {
+export function CalendarView() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [modal, setModal] = useState<ModalState>(null);
   const [lastRange, setLastRange] = useState<{ start: string; end: string } | null>(null);
@@ -60,14 +55,16 @@ export function CalendarView({ currentUser, onSelectUser }: Props) {
     () =>
       schedules.map((schedule) => {
         const colors = scheduleColors[schedule.scheduleType];
+        const isTentative = schedule.confirmationStatus === "TENTATIVE";
         return {
           id: String(schedule.id),
           title: schedule.title,
           start: schedule.scheduleDate,
           allDay: true,
-          backgroundColor: colors.background,
+          backgroundColor: isTentative ? colors.soft : colors.background,
           borderColor: colors.border,
-          textColor: colors.text,
+          textColor: isTentative ? colors.softText : colors.text,
+          classNames: isTentative ? ["schedule-event-tentative"] : ["schedule-event-confirmed"],
           extendedProps: {
             schedule
           }
@@ -112,34 +109,7 @@ export function CalendarView({ currentUser, onSelectUser }: Props) {
 
   return (
     <section className="rounded-lg border border-white/70 bg-white/90 p-3 shadow-sm sm:p-5">
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-2 text-sm font-medium text-slate-700">
-          <button
-            type="button"
-            onClick={() => onSelectUser("A")}
-            className={[
-              "inline-flex h-9 items-center gap-1 rounded-md border px-3 text-blue-700 transition",
-              currentUser === "A" ? "border-blue-500 bg-blue-100 shadow-sm" : "border-blue-100 bg-blue-50 hover:bg-blue-100"
-            ].join(" ")}
-            aria-pressed={currentUser === "A"}
-          >
-            <span className="h-2.5 w-2.5 rounded-full bg-[#2f80ed]" /> A
-          </button>
-          <button
-            type="button"
-            onClick={() => onSelectUser("B")}
-            className={[
-              "inline-flex h-9 items-center gap-1 rounded-md border px-3 text-violet-700 transition",
-              currentUser === "B" ? "border-violet-500 bg-violet-100 shadow-sm" : "border-violet-100 bg-violet-50 hover:bg-violet-100"
-            ].join(" ")}
-            aria-pressed={currentUser === "B"}
-          >
-            <span className="h-2.5 w-2.5 rounded-full bg-[#8b5cf6]" /> B
-          </button>
-          <span className="inline-flex h-9 items-center gap-1 rounded-md border border-emerald-100 bg-emerald-50 px-3 text-emerald-700">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#22a06b]" /> 같이
-          </span>
-        </div>
+      <div className="mb-3 flex justify-end">
         {loading ? <p className="text-sm text-slate-500">일정을 불러오는 중...</p> : null}
       </div>
 
@@ -153,12 +123,9 @@ export function CalendarView({ currentUser, onSelectUser }: Props) {
         locale="ko"
         timeZone="Asia/Seoul"
         headerToolbar={{
-          left: "prev,next today",
+          left: "prev",
           center: "title",
-          right: ""
-        }}
-        buttonText={{
-          today: "오늘"
+          right: "next"
         }}
         firstDay={1}
         height="auto"
@@ -173,7 +140,6 @@ export function CalendarView({ currentUser, onSelectUser }: Props) {
       {modal?.mode === "create" ? (
         <ScheduleModal
           mode="create"
-          currentUser={currentUser}
           initialDate={modal.date}
           onClose={() => setModal(null)}
           onSaved={() => {
@@ -186,7 +152,6 @@ export function CalendarView({ currentUser, onSelectUser }: Props) {
       {modal?.mode === "edit" ? (
         <ScheduleModal
           mode="edit"
-          currentUser={currentUser}
           schedule={modal.schedule}
           onClose={() => setModal({ mode: "detail", schedule: modal.schedule })}
           onSaved={() => {

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Schedule } from "@/types/schedule";
 import { formatKoreaDate } from "@/utils/date";
-import { scheduleLabels } from "@/utils/scheduleColors";
+import { confirmationLabels, scheduleLabels } from "@/utils/scheduleColors";
 
 type Props = {
   schedule: Schedule;
@@ -48,8 +48,12 @@ export function ScheduleDetailModal({ schedule, onClose, onEdit, onDelete }: Pro
             <dd className="text-slate-900">{formatKoreaDate(schedule.scheduleDate)}</dd>
           </div>
           <div className="grid grid-cols-[5rem_1fr] gap-3">
-            <dt className="font-semibold text-slate-500">등록</dt>
-            <dd className="text-slate-900">{schedule.createdBy}</dd>
+            <dt className="font-semibold text-slate-500">일정 구분</dt>
+            <dd className="text-slate-900">{scheduleLabels[schedule.scheduleType]}</dd>
+          </div>
+          <div className="grid grid-cols-[5rem_1fr] gap-3">
+            <dt className="font-semibold text-slate-500">확정 여부</dt>
+            <dd className="text-slate-900">{confirmationLabels[schedule.confirmationStatus]}</dd>
           </div>
           <div className="grid grid-cols-[5rem_1fr] gap-3">
             <dt className="font-semibold text-slate-500">메모</dt>
