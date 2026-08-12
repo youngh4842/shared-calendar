@@ -103,14 +103,14 @@ export default function SettingsPage() {
     <main className="min-h-screen bg-[var(--page-bg)] px-3 py-4 text-slate-900 sm:px-6 sm:py-8">
       <div className="mx-auto w-full max-w-3xl">
         <section className="rounded-lg border border-white/70 bg-white/90 p-4 shadow-sm sm:p-6">
-          <div className="mb-6 flex items-center justify-between gap-3">
+          <div className="mb-6 grid gap-4">
+            <Link href="/" className="w-fit rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+              ← 캘린더
+            </Link>
             <div>
-              <p className="text-sm font-semibold text-slate-500">우리 캘린더</p>
+              <p className="text-sm font-semibold text-slate-500">Between Days</p>
               <h1 className="mt-1 text-2xl font-bold text-slate-950">캘린더 설정</h1>
             </div>
-            <Link href="/" className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-              돌아가기
-            </Link>
           </div>
 
           {loading ? <p className="mb-4 rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-600">설정을 불러오는 중...</p> : null}

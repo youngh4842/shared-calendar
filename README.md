@@ -1,6 +1,6 @@
-# Shared Calendar
+# Between Days
 
-두 사람이 함께 사용하는 간단한 공유 캘린더 MVP입니다. Next.js App Router와 Route Handler로 화면과 REST API를 구성하고, Neon PostgreSQL을 데이터베이스로 사용합니다.
+Between Days는 두 사람이 함께 사용하는 간단한 공유 캘린더 MVP입니다. Next.js App Router와 Route Handler로 화면과 REST API를 구성하고, Neon PostgreSQL을 데이터베이스로 사용합니다.
 
 운영 배포 URL: [https://shared-calendar-mu.vercel.app](https://shared-calendar-mu.vercel.app)
 
