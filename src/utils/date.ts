@@ -5,6 +5,10 @@ function toInputDate(value: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+export function formatCalendarDate(value: Date): string {
+  return toInputDate(value);
+}
+
 export function normalizeCalendarDate(value: string): string {
   const dateOnly = value.slice(0, 10);
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {

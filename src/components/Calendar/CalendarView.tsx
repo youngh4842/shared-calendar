@@ -4,14 +4,15 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import type { DateClickArg } from "@fullcalendar/interaction";
-import type { DatesSetArg, EventClickArg, EventInput } from "@fullcalendar/core";
+import type { DatesSetArg, DayCellContentArg, EventClickArg, EventInput } from "@fullcalendar/core";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ScheduleDetailModal } from "@/components/ScheduleDetailModal/ScheduleDetailModal";
 import { ScheduleModal } from "@/components/ScheduleModal/ScheduleModal";
+import type { Holiday } from "@/types/holiday";
 import type { CalendarSetting, Schedule } from "@/types/schedule";
 import { defaultCalendarSettings, getSchedulePalette, toSettingsRecord } from "@/utils/scheduleColors";
-import { addOneDay, normalizeCalendarDate, subtractOneDay } from "@/utils/date";
+import { addOneDay, formatCalendarDate, normalizeCalendarDate, subtractOneDay } from "@/utils/date";
 
 type ModalState =
   | { mode: "create"; date: string }
@@ -21,9 +22,33 @@ type ModalState =
 
 const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
 
+function getYearsInRange(start: string, end: string) {
+  const startYear = Number(start.slice(0, 4));
+  const endYear = Number(end.slice(0, 4));
+
+  if (!Number.isInteger(startYear) || !Number.isInteger(endYear)) {
+    return [];
+  }
+
+  return Array.from({ length: endYear - startYear + 1 }, (_, index) => startYear + index);
+}
+
+function getDayTone(date: Date, holiday: Holiday | undefined) {
+  if (holiday?.isHoliday || date.getDay() === 0) {
+    return "holiday";
+  }
+
+  if (date.getDay() === 6) {
+    return "saturday";
+  }
+
+  return "weekday";
+}
+
 export function CalendarView() {
   const calendarRef = useRef<FullCalendar | null>(null);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [holidaysByDate, setHolidaysByDate] = useState<Record<string, Holiday>>({});
   const [settings, setSettings] = useState<Record<Schedule["scheduleType"], CalendarSetting>>(defaultCalendarSettings);
   const [modal, setModal] = useState<ModalState>(null);
   const [lastRange, setLastRange] = useState<{ start: string; end: string } | null>(null);
@@ -48,6 +73,30 @@ export function CalendarView() {
       setError(caught instanceof Error ? caught.message : "일정을 불러오지 못했습니다.");
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  const fetchHolidays = useCallback(async (start: string, end: string) => {
+    try {
+      const years = getYearsInRange(start, end);
+      const responses = await Promise.all(years.map((year) => fetch(`/api/holidays?year=${year}`)));
+      const holidays = await Promise.all(
+        responses.map(async (response) => {
+          if (!response.ok) {
+            return [];
+          }
+
+          return (await response.json()) as Holiday[];
+        })
+      );
+      const nextHolidays = holidays.flat().reduce<Record<string, Holiday>>((record, holiday) => {
+        record[holiday.date] = holiday;
+        return record;
+      }, {});
+
+      setHolidaysByDate(nextHolidays);
+    } catch {
+      setHolidaysByDate({});
     }
   }, []);
 
@@ -109,6 +158,31 @@ export function CalendarView() {
     [schedules, settings]
   );
 
+  const renderDayCellContent = useCallback(
+    (arg: DayCellContentArg) => {
+      const dateKey = formatCalendarDate(arg.date);
+      const holiday = holidaysByDate[dateKey];
+      const tone = getDayTone(arg.date, holiday);
+      const numberText = arg.dayNumberText.replace("일", "");
+
+      return (
+        <div className="calendar-day-meta">
+          <span className={`calendar-day-number calendar-day-number-${tone}`}>{numberText}</span>
+          {holiday ? <span className="calendar-holiday-name">{holiday.name}</span> : null}
+        </div>
+      );
+    },
+    [holidaysByDate]
+  );
+
+  const getDayCellClassNames = useCallback(
+    (arg: DayCellContentArg) => {
+      const holiday = holidaysByDate[formatCalendarDate(arg.date)];
+      return [`calendar-day-${getDayTone(arg.date, holiday)}`];
+    },
+    [holidaysByDate]
+  );
+
   function handleDatesSet(arg: DatesSetArg) {
     setCurrentTitle(arg.view.title);
 
@@ -124,6 +198,7 @@ export function CalendarView() {
 
     setLastRange(range);
     void fetchSchedules(range.start, range.end);
+    void fetchHolidays(range.start, range.end);
   }
 
   function moveMonth(direction: "prev" | "next") {
@@ -175,8 +250,8 @@ export function CalendarView() {
           </div>
         </div>
         <div className="calendar-weekdays" aria-hidden="true">
-          {weekdays.map((day) => (
-            <div key={day} className="calendar-weekday">
+          {weekdays.map((day, index) => (
+            <div key={day} className={["calendar-weekday", index === 0 ? "calendar-weekday-holiday" : "", index === 6 ? "calendar-weekday-saturday" : ""].join(" ")}>
               {day}
             </div>
           ))}
@@ -203,6 +278,8 @@ export function CalendarView() {
         dayMaxEvents={3}
         events={events}
         datesSet={handleDatesSet}
+        dayCellClassNames={getDayCellClassNames}
+        dayCellContent={renderDayCellContent}
         dateClick={handleDateClick}
         eventClick={handleEventClick}
       />

@@ -119,6 +119,14 @@ textarea {
   font-weight: 700;
 }
 
+.calendar-weekday-holiday {
+  color: #dc2626;
+}
+
+.calendar-weekday-saturday {
+  color: #2563eb;
+}
+
 .fc .fc-scrollgrid {
   border-top: 0;
 }
@@ -129,8 +137,40 @@ textarea {
 
 .fc .fc-daygrid-day-number {
   padding: 0.45rem;
-  color: #334155;
   font-size: 0.85rem;
+}
+
+.fc .fc-daygrid-day-top {
+  justify-content: flex-start;
+}
+
+.calendar-day-meta {
+  display: grid;
+  gap: 0.1rem;
+  line-height: 1.15;
+}
+
+.calendar-day-number {
+  color: #334155;
+  font-weight: 600;
+}
+
+.calendar-day-number-holiday {
+  color: #dc2626;
+}
+
+.calendar-day-number-saturday {
+  color: #2563eb;
+}
+
+.calendar-holiday-name {
+  max-width: 100%;
+  overflow: hidden;
+  color: #dc2626;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .fc .fc-event {
@@ -166,5 +206,9 @@ textarea {
 
   .fc .fc-event {
     font-size: 0.72rem;
+  }
+
+  .calendar-holiday-name {
+    font-size: 0.62rem;
   }
 }

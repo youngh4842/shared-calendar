@@ -14,6 +14,8 @@
 - 메모는 선택 입력
 - 스크롤 시 월 이동/년월 영역과 월~일 요일 영역이 함께 sticky 고정
 - `/settings`에서 일정 구분별 표시 이름과 색상 변경
+- 일요일/공휴일은 빨간색, 토요일은 파란색으로 표시
+- 대한민국 공휴일명을 날짜 셀 안에 작게 표시
 
 ## 최근 반영 내용
 
@@ -23,6 +25,7 @@
 - 월 이동 영역, 설정 버튼, 월~일 요일 영역을 하나의 sticky header로 고정
 - 일정 등록/수정 필수값을 명확화
 - `calendar_settings` 테이블과 `/api/settings`를 추가해 표시 이름과 색상 설정을 저장
+- `/api/holidays`를 추가해 대한민국 공휴일 표시
 
 필수값:
 
@@ -60,9 +63,12 @@ npm run dev
 
 ```bash
 DATABASE_URL="postgresql://USER:PASSWORD@HOST.neon.tech/DB?sslmode=require"
+HOLIDAY_API_KEY=""
 ```
 
 `.env*` 파일은 `.gitignore`에 포함되어 Git에 커밋되지 않습니다. Vercel 배포 환경에서는 Project Settings의 Environment Variables에 동일한 `DATABASE_URL` 값을 등록해야 합니다.
+
+`HOLIDAY_API_KEY`는 공공데이터포털 한국천문연구원 특일 정보 OpenAPI 키입니다. 값이 없거나 API 호출에 실패해도 캘린더와 일정 CRUD는 정상 동작하며, 공휴일 표시만 fallback 또는 빈 목록으로 처리됩니다.
 
 ## 데이터베이스
 
@@ -86,6 +92,8 @@ confirmation_status VARCHAR(10) NOT NULL
 - `DELETE /api/schedules/{id}`
 - `GET /api/settings`
 - `PUT /api/settings`
+- `GET /api/holidays?year=2026`
+- `GET /api/holidays?year=2026&month=8`
 
 ### POST/PUT 필수 필드
 
@@ -149,6 +157,22 @@ Validation 메시지:
 - `orange`
 - `green`
 - `gray`
+
+### Holidays API
+
+응답 형식:
+
+```json
+[
+  {
+    "date": "2026-08-15",
+    "name": "광복절",
+    "isHoliday": true
+  }
+]
+```
+
+공휴일은 `schedules` 테이블에 저장하지 않고 화면 표시용 데이터로만 사용합니다. API 호출 실패 시 `[]`를 반환해 기존 일정 기능에 영향을 주지 않습니다.
 
 ## 배포
 
