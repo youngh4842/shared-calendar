@@ -19,7 +19,7 @@ type ModalState =
   | { mode: "detail"; schedule: Schedule }
   | null;
 
-const weekdays = ["월", "화", "수", "목", "금", "토", "일"];
+const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
 
 export function CalendarView() {
   const calendarRef = useRef<FullCalendar | null>(null);
@@ -197,7 +197,7 @@ export function CalendarView() {
         timeZone="Asia/Seoul"
         headerToolbar={false}
         dayHeaders={false}
-        firstDay={1}
+        firstDay={0}
         height="auto"
         selectable
         dayMaxEvents={3}
