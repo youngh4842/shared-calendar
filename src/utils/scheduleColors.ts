@@ -48,51 +48,51 @@ export const colorPalettes: Record<
   }
 > = {
   blue: {
-    confirmedBackground: "#2f80ed",
-    confirmedBorder: "#1d63c7",
-    confirmedText: "#ffffff",
-    tentativeBackground: "#dbeafe",
-    tentativeBorder: "#60a5fa",
-    tentativeText: "#1d4ed8"
+    confirmedBackground: "#93c5fd",
+    confirmedBorder: "#3b82f6",
+    confirmedText: "#0f172a",
+    tentativeBackground: "#eff6ff",
+    tentativeBorder: "#93c5fd",
+    tentativeText: "#1e40af"
   },
   purple: {
-    confirmedBackground: "#8b5cf6",
-    confirmedBorder: "#6d3fe0",
-    confirmedText: "#ffffff",
-    tentativeBackground: "#ede9fe",
-    tentativeBorder: "#a78bfa",
+    confirmedBackground: "#c4b5fd",
+    confirmedBorder: "#8b5cf6",
+    confirmedText: "#2e1065",
+    tentativeBackground: "#f5f3ff",
+    tentativeBorder: "#c4b5fd",
     tentativeText: "#6d28d9"
   },
   pink: {
-    confirmedBackground: "#db2777",
-    confirmedBorder: "#be185d",
-    confirmedText: "#ffffff",
-    tentativeBackground: "#fce7f3",
-    tentativeBorder: "#f472b6",
+    confirmedBackground: "#f9a8d4",
+    confirmedBorder: "#ec4899",
+    confirmedText: "#831843",
+    tentativeBackground: "#fdf2f8",
+    tentativeBorder: "#f9a8d4",
     tentativeText: "#be185d"
   },
   orange: {
-    confirmedBackground: "#ea580c",
-    confirmedBorder: "#c2410c",
-    confirmedText: "#ffffff",
-    tentativeBackground: "#ffedd5",
-    tentativeBorder: "#fb923c",
+    confirmedBackground: "#fdba74",
+    confirmedBorder: "#f97316",
+    confirmedText: "#7c2d12",
+    tentativeBackground: "#fff7ed",
+    tentativeBorder: "#fdba74",
     tentativeText: "#c2410c"
   },
   green: {
-    confirmedBackground: "#22a06b",
-    confirmedBorder: "#178052",
-    confirmedText: "#ffffff",
-    tentativeBackground: "#dcfce7",
-    tentativeBorder: "#4ade80",
+    confirmedBackground: "#86efac",
+    confirmedBorder: "#22c55e",
+    confirmedText: "#064e3b",
+    tentativeBackground: "#f0fdf4",
+    tentativeBorder: "#86efac",
     tentativeText: "#166534"
   },
   gray: {
-    confirmedBackground: "#64748b",
-    confirmedBorder: "#475569",
-    confirmedText: "#ffffff",
-    tentativeBackground: "#f1f5f9",
-    tentativeBorder: "#94a3b8",
+    confirmedBackground: "#cbd5e1",
+    confirmedBorder: "#94a3b8",
+    confirmedText: "#0f172a",
+    tentativeBackground: "#f8fafc",
+    tentativeBorder: "#cbd5e1",
     tentativeText: "#334155"
   }
 };
