@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState, type MouseEvent } from "react";
+import { FormEvent, useEffect, useMemo, useState, type MouseEvent } from "react";
 import type { CalendarSetting, ColorKey, ConfirmationStatus, Schedule, ScheduleType } from "@/types/schedule";
 import { colorKeyOptions, colorLabels, colorPalettes, confirmationLabels, getScheduleTypeLabel, scheduleTypeOptions } from "@/utils/scheduleColors";
 
@@ -20,18 +20,46 @@ type Props =
       onSaved: () => void;
     };
 
+type FormSnapshot = {
+  startDate: string;
+  endDate: string;
+  title: string;
+  scheduleType: ScheduleType | null;
+  confirmationStatus: ConfirmationStatus | null;
+  colorKey: ColorKey;
+  memo: string;
+};
+
 const confirmationOptions: ConfirmationStatus[] = ["CONFIRMED", "TENTATIVE"];
 
+function normalizeSnapshot(value: FormSnapshot) {
+  return {
+    startDate: value.startDate,
+    endDate: value.endDate,
+    title: value.title,
+    scheduleType: value.scheduleType ?? "",
+    confirmationStatus: value.confirmationStatus ?? "",
+    colorKey: value.colorKey,
+    memo: value.memo ?? ""
+  };
+}
+
+function snapshotsEqual(left: FormSnapshot, right: FormSnapshot) {
+  const normalizedLeft = normalizeSnapshot(left);
+  const normalizedRight = normalizeSnapshot(right);
+  return (
+    normalizedLeft.startDate === normalizedRight.startDate &&
+    normalizedLeft.endDate === normalizedRight.endDate &&
+    normalizedLeft.title === normalizedRight.title &&
+    normalizedLeft.scheduleType === normalizedRight.scheduleType &&
+    normalizedLeft.confirmationStatus === normalizedRight.confirmationStatus &&
+    normalizedLeft.colorKey === normalizedRight.colorKey &&
+    normalizedLeft.memo === normalizedRight.memo
+  );
+}
+
 export function ScheduleModal(props: Props) {
-  const initial = useMemo<{
-    startDate: string;
-    endDate: string;
-    title: string;
-    scheduleType: ScheduleType | null;
-    confirmationStatus: ConfirmationStatus | null;
-    colorKey: ColorKey;
-    memo: string;
-  }>(() => {
+  const initial = useMemo<FormSnapshot>(() => {
     if (props.mode === "edit") {
       const fallbackColorKey = props.schedule.scheduleType ? props.settings[props.schedule.scheduleType].colorKey : "gray";
       return {
@@ -65,6 +93,50 @@ export function ScheduleModal(props: Props) {
   const [memo, setMemo] = useState(initial.memo);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
+
+  const currentSnapshot: FormSnapshot = {
+    startDate,
+    endDate,
+    title,
+    scheduleType,
+    confirmationStatus,
+    colorKey,
+    memo
+  };
+  const isDirty = !snapshotsEqual(initial, currentSnapshot);
+
+  function closeImmediately() {
+    setCloseConfirmOpen(false);
+    props.onClose();
+  }
+
+  function requestClose() {
+    if (!isDirty) {
+      closeImmediately();
+      return;
+    }
+
+    setCloseConfirmOpen(true);
+  }
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      if (closeConfirmOpen) {
+        setCloseConfirmOpen(false);
+        return;
+      }
+
+      requestClose();
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  });
 
   function handleScheduleTypeClick(option: ScheduleType) {
     const nextScheduleType = scheduleType === option ? null : option;
@@ -74,7 +146,7 @@ export function ScheduleModal(props: Props) {
 
   function handleOverlayClick(event: MouseEvent<HTMLDivElement>) {
     if (event.target === event.currentTarget) {
-      props.onClose();
+      requestClose();
     }
   }
 
@@ -137,12 +209,14 @@ export function ScheduleModal(props: Props) {
     }
   }
 
+  const closeConfirmTitle = props.mode === "edit" ? "변경된 내용이 있습니다." : "작성 중인 내용이 있습니다.";
+
   return (
     <div onClick={handleOverlayClick} className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/45 px-3 py-4 sm:items-center">
       <form noValidate onClick={(event) => event.stopPropagation()} onSubmit={handleSubmit} className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-lg bg-white p-5 shadow-xl">
         <div className="mb-5 flex items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-slate-950">{props.mode === "edit" ? "일정 수정" : "일정 등록"}</h2>
-          <button type="button" onClick={props.onClose} className="rounded-md px-3 py-1.5 text-sm font-semibold text-slate-500 hover:bg-slate-100">
+          <button type="button" onClick={requestClose} className="rounded-md px-3 py-1.5 text-sm font-semibold text-slate-500 hover:bg-slate-100">
             닫기
           </button>
         </div>
@@ -259,7 +333,7 @@ export function ScheduleModal(props: Props) {
         {error ? <p className="mt-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
 
         <div className="mt-6 grid grid-cols-2 gap-2">
-          <button type="button" onClick={props.onClose} className="h-11 rounded-md border border-slate-300 font-semibold text-slate-700 hover:bg-slate-50">
+          <button type="button" onClick={requestClose} className="h-11 rounded-md border border-slate-300 font-semibold text-slate-700 hover:bg-slate-50">
             취소
           </button>
           <button type="submit" disabled={saving} className="h-11 rounded-md bg-slate-950 font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400">
@@ -267,6 +341,23 @@ export function ScheduleModal(props: Props) {
           </button>
         </div>
       </form>
+
+      {closeConfirmOpen ? (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/35 px-4" onClick={(event) => event.stopPropagation()}>
+          <div className="w-full max-w-sm rounded-lg bg-white p-5 shadow-xl">
+            <p className="text-base font-bold text-slate-950">{closeConfirmTitle}</p>
+            <p className="mt-2 text-sm text-slate-600">저장하지 않고 닫으시겠습니까?</p>
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => setCloseConfirmOpen(false)} className="h-10 rounded-md border border-slate-300 font-semibold text-slate-700 hover:bg-slate-50">
+                취소
+              </button>
+              <button type="button" onClick={closeImmediately} className="h-10 rounded-md bg-slate-950 font-semibold text-white hover:bg-slate-800">
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
