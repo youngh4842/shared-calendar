@@ -132,7 +132,7 @@ export function toSettingsRecord(settings: CalendarSetting[]): Record<ScheduleTy
 
 export function getScheduleTypeLabel(settings: Record<ScheduleType, CalendarSetting>, scheduleType: ScheduleType | null) {
   if (!scheduleType) {
-    return "구분 없음";
+    return "";
   }
 
   return settings[scheduleType]?.displayName || defaultCalendarSettings[scheduleType].displayName;

@@ -52,7 +52,7 @@ export function ScheduleDetailModal({ schedule, settings, onClose, onEdit, onDel
       <div onClick={(event) => event.stopPropagation()} className="w-full max-w-lg rounded-lg bg-white p-5 shadow-xl">
         <div className="mb-5 flex items-start justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold text-emerald-700">{getScheduleTypeLabel(settings, schedule.scheduleType)}</p>
+            {schedule.scheduleType ? <p className="text-sm font-semibold text-emerald-700">{getScheduleTypeLabel(settings, schedule.scheduleType)}</p> : null}
             <h2 className="mt-1 text-xl font-semibold text-slate-950">{schedule.title}</h2>
           </div>
           <button type="button" onClick={onClose} className="rounded-md px-3 py-1.5 text-sm font-semibold text-slate-500 hover:bg-slate-100">
@@ -65,10 +65,12 @@ export function ScheduleDetailModal({ schedule, settings, onClose, onEdit, onDel
             <dt className="font-semibold text-slate-500">날짜</dt>
             <dd className="text-slate-900">{formatKoreaDateRange(schedule.startDate, schedule.endDate)}</dd>
           </div>
-          <div className="grid grid-cols-[5rem_1fr] gap-3">
-            <dt className="font-semibold text-slate-500">일정 구분</dt>
-            <dd className="text-slate-900">{getScheduleTypeLabel(settings, schedule.scheduleType)}</dd>
-          </div>
+          {schedule.scheduleType ? (
+            <div className="grid grid-cols-[5rem_1fr] gap-3">
+              <dt className="font-semibold text-slate-500">일정 구분</dt>
+              <dd className="text-slate-900">{getScheduleTypeLabel(settings, schedule.scheduleType)}</dd>
+            </div>
+          ) : null}
           <div className="grid grid-cols-[5rem_1fr] gap-3">
             <dt className="font-semibold text-slate-500">확정 여부</dt>
             <dd className="text-slate-900">{confirmationLabels[schedule.confirmationStatus]}</dd>
