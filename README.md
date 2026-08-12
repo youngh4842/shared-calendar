@@ -8,17 +8,21 @@
 
 - 월간 캘린더에서 A, B, 같이 일정을 함께 확인
 - 일정 등록, 수정, 삭제
+- 하루 일정과 기간 일정 등록
 - 일정 구분: `A`, `B`, `COMMON`
 - 확정 구분: `CONFIRMED`, `TENTATIVE`
 - 메모는 선택 입력
 - 스크롤 시 월 이동/년월 영역과 월~일 요일 영역이 함께 sticky 고정
+- `/settings`에서 일정 구분별 표시 이름과 색상 변경
 
 ## 최근 반영 내용
 
-- FullCalendar 기본 헤더 대신 커스텀 캘린더 헤더를 사용하도록 수정
-- `< 2026년 8월 >` 월 이동 영역과 `월 화 수 목 금 토 일` 요일 영역을 하나의 sticky header로 고정
-- sticky 영역에 배경색과 z-index를 적용해 일정 카드가 위로 겹쳐 보이지 않도록 처리
+- 일정 날짜 구조를 `schedule_date`에서 `start_date`, `end_date`로 변경
+- 기존 `schedule_date` 데이터는 삭제하지 않고 `start_date = schedule_date`, `end_date = schedule_date`로 자동 마이그레이션
+- FullCalendar 기간 일정은 하나의 row로 저장하고, 화면에서는 연결된 일정으로 표시
+- 월 이동 영역, 설정 버튼, 월~일 요일 영역을 하나의 sticky header로 고정
 - 일정 등록/수정 필수값을 명확화
+- `calendar_settings` 테이블과 `/api/settings`를 추가해 표시 이름과 색상 설정을 저장
 
 필수값:
 
@@ -67,7 +71,8 @@ DATABASE_URL="postgresql://USER:PASSWORD@HOST.neon.tech/DB?sslmode=require"
 핵심 제약 조건:
 
 ```sql
-schedule_date DATE NOT NULL
+start_date DATE NOT NULL
+end_date DATE NOT NULL
 title VARCHAR(200) NOT NULL
 confirmation_status VARCHAR(10) NOT NULL
 ```
@@ -79,12 +84,15 @@ confirmation_status VARCHAR(10) NOT NULL
 - `GET /api/schedules/{id}`
 - `PUT /api/schedules/{id}`
 - `DELETE /api/schedules/{id}`
+- `GET /api/settings`
+- `PUT /api/settings`
 
 ### POST/PUT 필수 필드
 
 ```json
 {
-  "scheduleDate": "2026-08-15",
+  "startDate": "2026-08-15",
+  "endDate": "2026-08-17",
   "title": "일정 제목",
   "scheduleType": "COMMON",
   "confirmationStatus": "CONFIRMED",
@@ -97,22 +105,56 @@ confirmation_status VARCHAR(10) NOT NULL
 - `scheduleType`: `A`, `B`, `COMMON`
 - `confirmationStatus`: `CONFIRMED`, `TENTATIVE`
 
+기간 조건:
+
+- 하루 일정: `startDate`와 `endDate`를 같은 날짜로 저장
+- 기간 일정: 사용자가 선택한 실제 종료일을 `endDate`로 저장
+- API에서는 `endDate >= startDate` 조건을 검증
+
 Validation 메시지:
 
 - 날짜 없음: `날짜를 선택해주세요.`
 - 제목 없음 또는 공백만 입력: `제목을 입력해주세요.`
 - 일정 구분 없음 또는 잘못된 값: `일정 구분을 선택해주세요.`
 - 확정 구분 없음 또는 잘못된 값: `확정 여부를 선택해주세요.`
+- 종료일이 시작일보다 빠름: `종료일은 시작일 이후 날짜를 선택해주세요.`
+
+### Settings API
+
+```json
+[
+  {
+    "scheduleType": "A",
+    "displayName": "A",
+    "colorKey": "blue"
+  },
+  {
+    "scheduleType": "B",
+    "displayName": "B",
+    "colorKey": "purple"
+  },
+  {
+    "scheduleType": "COMMON",
+    "displayName": "같이",
+    "colorKey": "green"
+  }
+]
+```
+
+허용 색상:
+
+- `blue`
+- `purple`
+- `pink`
+- `orange`
+- `green`
+- `gray`
 
 ## 배포
 
 GitHub `main` 브랜치에 push하면 Vercel production 배포가 자동으로 실행됩니다.
 
-최근 확인된 배포:
-
-- Commit: `4708ab5 fix: make calendar header sticky`
-- Vercel 상태: `READY`
-- Production URL: [https://shared-calendar-mu.vercel.app](https://shared-calendar-mu.vercel.app)
+Production URL: [https://shared-calendar-mu.vercel.app](https://shared-calendar-mu.vercel.app)
 
 ## 검증
 

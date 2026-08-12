@@ -5,12 +5,13 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import type { DateClickArg } from "@fullcalendar/interaction";
 import type { DatesSetArg, EventClickArg, EventInput } from "@fullcalendar/core";
-import { useCallback, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ScheduleDetailModal } from "@/components/ScheduleDetailModal/ScheduleDetailModal";
 import { ScheduleModal } from "@/components/ScheduleModal/ScheduleModal";
-import type { Schedule } from "@/types/schedule";
-import { scheduleColors } from "@/utils/scheduleColors";
-import { normalizeCalendarDate, subtractOneDay } from "@/utils/date";
+import type { CalendarSetting, Schedule } from "@/types/schedule";
+import { defaultCalendarSettings, getSchedulePalette, toSettingsRecord } from "@/utils/scheduleColors";
+import { addOneDay, normalizeCalendarDate, subtractOneDay } from "@/utils/date";
 
 type ModalState =
   | { mode: "create"; date: string }
@@ -23,6 +24,7 @@ const weekdays = ["월", "화", "수", "목", "금", "토", "일"];
 export function CalendarView() {
   const calendarRef = useRef<FullCalendar | null>(null);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
+  const [settings, setSettings] = useState<Record<Schedule["scheduleType"], CalendarSetting>>(defaultCalendarSettings);
   const [modal, setModal] = useState<ModalState>(null);
   const [lastRange, setLastRange] = useState<{ start: string; end: string } | null>(null);
   const [currentTitle, setCurrentTitle] = useState("");
@@ -49,6 +51,35 @@ export function CalendarView() {
     }
   }, []);
 
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadSettings() {
+      try {
+        const response = await fetch("/api/settings");
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error ?? "설정을 불러오지 못했습니다.");
+        }
+
+        if (!ignore) {
+          setSettings(toSettingsRecord(data));
+        }
+      } catch {
+        if (!ignore) {
+          setSettings(defaultCalendarSettings);
+        }
+      }
+    }
+
+    void loadSettings();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
   const refresh = useCallback(() => {
     if (lastRange) {
       void fetchSchedules(lastRange.start, lastRange.end);
@@ -58,23 +89,24 @@ export function CalendarView() {
   const events = useMemo<EventInput[]>(
     () =>
       schedules.map((schedule) => {
-        const colors = scheduleColors[schedule.scheduleType];
+        const colors = getSchedulePalette(settings, schedule.scheduleType);
         const isTentative = schedule.confirmationStatus === "TENTATIVE";
         return {
           id: String(schedule.id),
           title: schedule.title,
-          start: schedule.scheduleDate,
+          start: schedule.startDate,
+          end: addOneDay(schedule.endDate),
           allDay: true,
-          backgroundColor: isTentative ? colors.soft : colors.background,
-          borderColor: colors.border,
-          textColor: isTentative ? colors.softText : colors.text,
+          backgroundColor: isTentative ? colors.tentativeBackground : colors.confirmedBackground,
+          borderColor: isTentative ? colors.tentativeBorder : colors.confirmedBorder,
+          textColor: isTentative ? colors.tentativeText : colors.confirmedText,
           classNames: isTentative ? ["schedule-event-tentative"] : ["schedule-event-confirmed"],
           extendedProps: {
             schedule
           }
         };
       }),
-    [schedules]
+    [schedules, settings]
   );
 
   function handleDatesSet(arg: DatesSetArg) {
@@ -133,9 +165,14 @@ export function CalendarView() {
           <div className="calendar-title" aria-live="polite">
             {currentTitle}
           </div>
-          <button type="button" onClick={() => moveMonth("next")} className="calendar-nav-button" aria-label="다음 달">
-            &gt;
-          </button>
+          <div className="calendar-toolbar-actions">
+            <button type="button" onClick={() => moveMonth("next")} className="calendar-nav-button" aria-label="다음 달">
+              &gt;
+            </button>
+            <Link href="/settings" className="calendar-settings-link" aria-label="캘린더 설정">
+              설정
+            </Link>
+          </div>
         </div>
         <div className="calendar-weekdays" aria-hidden="true">
           {weekdays.map((day) => (
@@ -174,6 +211,7 @@ export function CalendarView() {
         <ScheduleModal
           mode="create"
           initialDate={modal.date}
+          settings={settings}
           onClose={() => setModal(null)}
           onSaved={() => {
             setModal(null);
@@ -186,6 +224,7 @@ export function CalendarView() {
         <ScheduleModal
           mode="edit"
           schedule={modal.schedule}
+          settings={settings}
           onClose={() => setModal({ mode: "detail", schedule: modal.schedule })}
           onSaved={() => {
             setModal(null);
@@ -197,6 +236,7 @@ export function CalendarView() {
       {modal?.mode === "detail" ? (
         <ScheduleDetailModal
           schedule={modal.schedule}
+          settings={settings}
           onClose={() => setModal(null)}
           onEdit={() => setModal({ mode: "edit", schedule: modal.schedule })}
           onDelete={() => deleteSchedule(modal.schedule.id)}

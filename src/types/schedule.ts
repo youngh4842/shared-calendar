@@ -2,9 +2,12 @@ export type ScheduleType = "A" | "B" | "COMMON";
 
 export type ConfirmationStatus = "CONFIRMED" | "TENTATIVE";
 
+export type ColorKey = "blue" | "purple" | "pink" | "orange" | "green" | "gray";
+
 export type Schedule = {
   id: number;
-  scheduleDate: string;
+  startDate: string;
+  endDate: string;
   title: string;
   scheduleType: ScheduleType;
   confirmationStatus: ConfirmationStatus;
@@ -14,9 +17,16 @@ export type Schedule = {
 };
 
 export type ScheduleInput = {
-  scheduleDate: string;
+  startDate: string;
+  endDate: string;
   title: string;
   scheduleType: ScheduleType;
   confirmationStatus: ConfirmationStatus;
   memo?: string | null;
+};
+
+export type CalendarSetting = {
+  scheduleType: ScheduleType;
+  displayName: string;
+  colorKey: ColorKey;
 };

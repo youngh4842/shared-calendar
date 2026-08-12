@@ -21,14 +21,14 @@ export async function GET(request: Request) {
       ? await sql`
           SELECT *
           FROM schedules
-          WHERE schedule_date >= ${start}::date
-            AND schedule_date <= ${end}::date
-          ORDER BY schedule_date ASC, id ASC
+          WHERE start_date <= ${end}::date
+            AND end_date >= ${start}::date
+          ORDER BY start_date ASC, end_date ASC, id ASC
         `
       : await sql`
           SELECT *
           FROM schedules
-          ORDER BY schedule_date ASC, id ASC
+          ORDER BY start_date ASC, end_date ASC, id ASC
         `;
 
     return NextResponse.json(rows.map(mapSchedule));
@@ -50,9 +50,10 @@ export async function POST(request: Request) {
     const data = validation.data;
     const sql = getSql();
     const rows = await sql`
-      INSERT INTO schedules (schedule_date, title, schedule_type, confirmation_status, memo)
+      INSERT INTO schedules (start_date, end_date, title, schedule_type, confirmation_status, memo)
       VALUES (
-        ${data.scheduleDate}::date,
+        ${data.startDate}::date,
+        ${data.endDate}::date,
         ${data.title},
         ${data.scheduleType},
         ${data.confirmationStatus},

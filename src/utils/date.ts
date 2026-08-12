@@ -27,6 +27,18 @@ export function subtractOneDay(value: string): string {
   return toInputDate(date);
 }
 
+export function addOneDay(value: string): string {
+  const normalized = normalizeCalendarDate(value);
+  const date = new Date(`${normalized}T00:00:00+09:00`);
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  date.setDate(date.getDate() + 1);
+  return toInputDate(date);
+}
+
 export function isValidScheduleDate(value: string | null): value is string {
   if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return false;
@@ -47,4 +59,12 @@ export function formatKoreaDate(value: string): string {
     timeZone: "Asia/Seoul",
     dateStyle: "medium"
   }).format(new Date(`${normalized}T00:00:00+09:00`));
+}
+
+export function formatKoreaDateRange(startDate: string, endDate: string): string {
+  if (startDate === endDate) {
+    return formatKoreaDate(startDate);
+  }
+
+  return `${formatKoreaDate(startDate)} ~ ${formatKoreaDate(endDate)}`;
 }

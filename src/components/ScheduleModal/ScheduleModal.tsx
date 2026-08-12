@@ -1,29 +1,32 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import type { ConfirmationStatus, Schedule, ScheduleType } from "@/types/schedule";
-import { confirmationLabels, scheduleColors, scheduleTypeButtonLabels } from "@/utils/scheduleColors";
+import type { CalendarSetting, ConfirmationStatus, Schedule, ScheduleType } from "@/types/schedule";
+import { colorPalettes, confirmationLabels, getScheduleTypeLabel, scheduleTypeOptions } from "@/utils/scheduleColors";
 
 type Props =
   | {
       mode: "create";
       initialDate: string;
+      settings: Record<ScheduleType, CalendarSetting>;
       onClose: () => void;
       onSaved: () => void;
     }
   | {
       mode: "edit";
       schedule: Schedule;
+      settings: Record<ScheduleType, CalendarSetting>;
       onClose: () => void;
       onSaved: () => void;
     };
 
-const scheduleTypeOptions: ScheduleType[] = ["A", "B", "COMMON"];
 const confirmationOptions: ConfirmationStatus[] = ["CONFIRMED", "TENTATIVE"];
 
 export function ScheduleModal(props: Props) {
   const initial = useMemo<{
-    scheduleDate: string;
+    dateMode: "single" | "range";
+    startDate: string;
+    endDate: string;
     title: string;
     scheduleType: ScheduleType | null;
     confirmationStatus: ConfirmationStatus | null;
@@ -31,7 +34,9 @@ export function ScheduleModal(props: Props) {
   }>(() => {
     if (props.mode === "edit") {
       return {
-        scheduleDate: props.schedule.scheduleDate,
+        dateMode: props.schedule.startDate === props.schedule.endDate ? "single" : "range",
+        startDate: props.schedule.startDate,
+        endDate: props.schedule.endDate,
         title: props.schedule.title,
         scheduleType: props.schedule.scheduleType,
         confirmationStatus: props.schedule.confirmationStatus,
@@ -40,7 +45,9 @@ export function ScheduleModal(props: Props) {
     }
 
     return {
-      scheduleDate: props.initialDate,
+      dateMode: "single",
+      startDate: props.initialDate,
+      endDate: props.initialDate,
       title: "",
       scheduleType: null,
       confirmationStatus: null,
@@ -48,7 +55,9 @@ export function ScheduleModal(props: Props) {
     };
   }, [props]);
 
-  const [scheduleDate, setScheduleDate] = useState(initial.scheduleDate);
+  const [dateMode, setDateMode] = useState<"single" | "range">(initial.dateMode);
+  const [startDate, setStartDate] = useState(initial.startDate);
+  const [endDate, setEndDate] = useState(initial.endDate);
   const [title, setTitle] = useState(initial.title);
   const [scheduleType, setScheduleType] = useState<ScheduleType | null>(initial.scheduleType);
   const [confirmationStatus, setConfirmationStatus] = useState<ConfirmationStatus | null>(initial.confirmationStatus);
@@ -56,12 +65,33 @@ export function ScheduleModal(props: Props) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  function handleDateModeChange(nextMode: "single" | "range") {
+    setDateMode(nextMode);
+    if (nextMode === "single") {
+      setEndDate(startDate);
+    }
+  }
+
+  function handleStartDateChange(value: string) {
+    setStartDate(value);
+    if (dateMode === "single") {
+      setEndDate(value);
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
 
-    if (!scheduleDate) {
+    const normalizedEndDate = dateMode === "single" ? startDate : endDate;
+
+    if (!startDate || !normalizedEndDate) {
       setError("날짜를 선택해주세요.");
+      return;
+    }
+
+    if (normalizedEndDate < startDate) {
+      setError("종료일은 시작일 이후 날짜를 선택해주세요.");
       return;
     }
 
@@ -83,7 +113,8 @@ export function ScheduleModal(props: Props) {
     setSaving(true);
 
     const payload = {
-      scheduleDate,
+      startDate,
+      endDate: normalizedEndDate,
       title,
       scheduleType,
       confirmationStatus,
@@ -124,10 +155,38 @@ export function ScheduleModal(props: Props) {
         </div>
 
         <div className="grid gap-4">
-          <label className="grid gap-1.5 text-sm font-medium text-slate-700">
-            날짜 *
-            <input type="date" value={scheduleDate} onChange={(event) => setScheduleDate(event.target.value)} className="h-11 rounded-md border border-slate-300 px-3 outline-none focus:border-slate-500" required />
-          </label>
+          <fieldset className="grid gap-2">
+            <legend className="text-sm font-medium text-slate-700">날짜 *</legend>
+            <div className="grid grid-cols-2 gap-2">
+              {(["single", "range"] as const).map((option) => {
+                const selected = dateMode === option;
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => handleDateModeChange(option)}
+                    className={[
+                      "h-11 rounded-md border px-3 text-sm font-semibold transition",
+                      selected ? "border-slate-950 bg-slate-950 text-white shadow-sm" : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                    ].join(" ")}
+                    aria-pressed={selected}
+                  >
+                    {option === "single" ? "하루" : "기간"}
+                  </button>
+                );
+              })}
+            </div>
+
+            {dateMode === "single" ? (
+              <input type="date" value={startDate} onChange={(event) => handleStartDateChange(event.target.value)} className="h-11 rounded-md border border-slate-300 px-3 outline-none focus:border-slate-500" required />
+            ) : (
+              <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                <input type="date" value={startDate} onChange={(event) => handleStartDateChange(event.target.value)} className="h-11 min-w-0 rounded-md border border-slate-300 px-3 outline-none focus:border-slate-500" required />
+                <span className="text-sm font-semibold text-slate-500">~</span>
+                <input type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} className="h-11 min-w-0 rounded-md border border-slate-300 px-3 outline-none focus:border-slate-500" required />
+              </div>
+            )}
+          </fieldset>
 
           <label className="grid gap-1.5 text-sm font-medium text-slate-700">
             제목 *
@@ -138,7 +197,7 @@ export function ScheduleModal(props: Props) {
             <legend className="text-sm font-medium text-slate-700">일정 구분 *</legend>
             <div className="grid grid-cols-3 gap-2">
               {scheduleTypeOptions.map((option) => {
-                const colors = scheduleColors[option];
+                const palette = colorPalettes[props.settings[option].colorKey];
                 const selected = scheduleType === option;
                 return (
                   <button
@@ -147,13 +206,13 @@ export function ScheduleModal(props: Props) {
                     onClick={() => setScheduleType(option)}
                     className="h-11 rounded-md border px-3 text-sm font-semibold transition"
                     style={{
-                      borderColor: selected ? colors.border : "#cbd5e1",
-                      backgroundColor: selected ? colors.background : "#ffffff",
-                      color: selected ? colors.text : "#334155"
+                      borderColor: selected ? palette.confirmedBorder : "#cbd5e1",
+                      backgroundColor: selected ? palette.confirmedBackground : "#ffffff",
+                      color: selected ? palette.confirmedText : "#334155"
                     }}
                     aria-pressed={selected}
                   >
-                    {scheduleTypeButtonLabels[option]}
+                    {getScheduleTypeLabel(props.settings, option)}
                   </button>
                 );
               })}

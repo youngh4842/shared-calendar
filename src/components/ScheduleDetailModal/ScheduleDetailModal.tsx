@@ -1,18 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import type { Schedule } from "@/types/schedule";
-import { formatKoreaDate } from "@/utils/date";
-import { confirmationLabels, scheduleLabels } from "@/utils/scheduleColors";
+import type { CalendarSetting, Schedule, ScheduleType } from "@/types/schedule";
+import { formatKoreaDateRange } from "@/utils/date";
+import { confirmationLabels, getScheduleTypeLabel } from "@/utils/scheduleColors";
 
 type Props = {
   schedule: Schedule;
+  settings: Record<ScheduleType, CalendarSetting>;
   onClose: () => void;
   onEdit: () => void;
   onDelete: () => Promise<void>;
 };
 
-export function ScheduleDetailModal({ schedule, onClose, onEdit, onDelete }: Props) {
+export function ScheduleDetailModal({ schedule, settings, onClose, onEdit, onDelete }: Props) {
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +35,7 @@ export function ScheduleDetailModal({ schedule, onClose, onEdit, onDelete }: Pro
       <div className="w-full max-w-lg rounded-lg bg-white p-5 shadow-xl">
         <div className="mb-5 flex items-start justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold text-emerald-700">{scheduleLabels[schedule.scheduleType]}</p>
+            <p className="text-sm font-semibold text-emerald-700">{getScheduleTypeLabel(settings, schedule.scheduleType)}</p>
             <h2 className="mt-1 text-xl font-semibold text-slate-950">{schedule.title}</h2>
           </div>
           <button type="button" onClick={onClose} className="rounded-md px-3 py-1.5 text-sm font-semibold text-slate-500 hover:bg-slate-100">
@@ -45,11 +46,11 @@ export function ScheduleDetailModal({ schedule, onClose, onEdit, onDelete }: Pro
         <dl className="grid gap-3 text-sm">
           <div className="grid grid-cols-[5rem_1fr] gap-3">
             <dt className="font-semibold text-slate-500">날짜</dt>
-            <dd className="text-slate-900">{formatKoreaDate(schedule.scheduleDate)}</dd>
+            <dd className="text-slate-900">{formatKoreaDateRange(schedule.startDate, schedule.endDate)}</dd>
           </div>
           <div className="grid grid-cols-[5rem_1fr] gap-3">
             <dt className="font-semibold text-slate-500">일정 구분</dt>
-            <dd className="text-slate-900">{scheduleLabels[schedule.scheduleType]}</dd>
+            <dd className="text-slate-900">{getScheduleTypeLabel(settings, schedule.scheduleType)}</dd>
           </div>
           <div className="grid grid-cols-[5rem_1fr] gap-3">
             <dt className="font-semibold text-slate-500">확정 여부</dt>

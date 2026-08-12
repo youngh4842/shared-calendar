@@ -55,7 +55,8 @@ export async function PUT(request: Request, context: RouteContext) {
     const sql = getSql();
     const rows = await sql`
       UPDATE schedules
-      SET schedule_date = ${data.scheduleDate}::date,
+      SET start_date = ${data.startDate}::date,
+          end_date = ${data.endDate}::date,
           title = ${data.title},
           schedule_type = ${data.scheduleType},
           confirmation_status = ${data.confirmationStatus},
