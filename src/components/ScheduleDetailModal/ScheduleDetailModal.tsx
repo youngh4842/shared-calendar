@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import type { CalendarSetting, Schedule, ScheduleType } from "@/types/schedule";
 import { formatKoreaDateRange } from "@/utils/date";
 import { confirmationLabels, getScheduleTypeLabel } from "@/utils/scheduleColors";
@@ -18,6 +18,23 @@ export function ScheduleDetailModal({ schedule, settings, onClose, onEdit, onDel
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  function handleOverlayClick(event: MouseEvent<HTMLDivElement>) {
+    if (event.target === event.currentTarget) {
+      onClose();
+    }
+  }
+
   async function handleDelete() {
     setDeleting(true);
     setError(null);
@@ -31,8 +48,8 @@ export function ScheduleDetailModal({ schedule, settings, onClose, onEdit, onDel
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/45 px-3 py-4 sm:items-center">
-      <div className="w-full max-w-lg rounded-lg bg-white p-5 shadow-xl">
+    <div onClick={handleOverlayClick} className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/45 px-3 py-4 sm:items-center">
+      <div onClick={(event) => event.stopPropagation()} className="w-full max-w-lg rounded-lg bg-white p-5 shadow-xl">
         <div className="mb-5 flex items-start justify-between gap-3">
           <div>
             <p className="text-sm font-semibold text-emerald-700">{getScheduleTypeLabel(settings, schedule.scheduleType)}</p>
