@@ -2,13 +2,13 @@ import type { CalendarSetting, ColorKey, ConfirmationStatus, ScheduleType } from
 
 export const scheduleTypeOptions: ScheduleType[] = ["A", "B", "COMMON"];
 
-export const colorKeyOptions: ColorKey[] = ["blue", "purple", "pink", "orange", "green", "gray"];
+export const colorKeyOptions: ColorKey[] = ["sky", "purple", "pink", "yellow", "lime", "gray"];
 
 export const defaultCalendarSettings: Record<ScheduleType, CalendarSetting> = {
   A: {
     scheduleType: "A",
     displayName: "A",
-    colorKey: "blue"
+    colorKey: "sky"
   },
   B: {
     scheduleType: "B",
@@ -18,16 +18,28 @@ export const defaultCalendarSettings: Record<ScheduleType, CalendarSetting> = {
   COMMON: {
     scheduleType: "COMMON",
     displayName: "같이",
-    colorKey: "green"
+    colorKey: "lime"
   }
 };
 
+export const legacyColorKeyMap: Record<string, ColorKey> = {
+  blue: "sky",
+  purple: "purple",
+  pink: "pink",
+  orange: "yellow",
+  green: "lime",
+  gray: "gray",
+  sky: "sky",
+  yellow: "yellow",
+  lime: "lime"
+};
+
 export const colorLabels: Record<ColorKey, string> = {
-  blue: "파랑",
+  sky: "하늘",
   purple: "보라",
   pink: "핑크",
-  orange: "주황",
-  green: "초록",
+  yellow: "노랑",
+  lime: "연두",
   gray: "회색"
 };
 
@@ -47,60 +59,69 @@ export const colorPalettes: Record<
     tentativeText: string;
   }
 > = {
-  blue: {
-    confirmedBackground: "#93c5fd",
-    confirmedBorder: "#3b82f6",
-    confirmedText: "#0f172a",
-    tentativeBackground: "#eff6ff",
-    tentativeBorder: "#93c5fd",
-    tentativeText: "#1e40af"
+  sky: {
+    confirmedBackground: "#CFEFFF",
+    confirmedBorder: "#9FD3F2",
+    confirmedText: "#3F6F8C",
+    tentativeBackground: "#F2FBFF",
+    tentativeBorder: "#7FC4E8",
+    tentativeText: "#4E7B96"
   },
   purple: {
-    confirmedBackground: "#c4b5fd",
-    confirmedBorder: "#8b5cf6",
-    confirmedText: "#2e1065",
-    tentativeBackground: "#f5f3ff",
-    tentativeBorder: "#c4b5fd",
-    tentativeText: "#6d28d9"
+    confirmedBackground: "#E6D9F7",
+    confirmedBorder: "#C5AEE8",
+    confirmedText: "#6C5A8E",
+    tentativeBackground: "#F7F2FC",
+    tentativeBorder: "#B79DDF",
+    tentativeText: "#7A6898"
   },
   pink: {
-    confirmedBackground: "#f9a8d4",
-    confirmedBorder: "#ec4899",
-    confirmedText: "#831843",
-    tentativeBackground: "#fdf2f8",
-    tentativeBorder: "#f9a8d4",
-    tentativeText: "#be185d"
+    confirmedBackground: "#F8D8E8",
+    confirmedBorder: "#E8AFCB",
+    confirmedText: "#8C5870",
+    tentativeBackground: "#FFF3F8",
+    tentativeBorder: "#E29BBC",
+    tentativeText: "#946174"
   },
-  orange: {
-    confirmedBackground: "#fdba74",
-    confirmedBorder: "#f97316",
-    confirmedText: "#7c2d12",
-    tentativeBackground: "#fff7ed",
-    tentativeBorder: "#fdba74",
-    tentativeText: "#c2410c"
+  yellow: {
+    confirmedBackground: "#FCEEB8",
+    confirmedBorder: "#E7D47A",
+    confirmedText: "#8A7740",
+    tentativeBackground: "#FFFBEA",
+    tentativeBorder: "#DABD5F",
+    tentativeText: "#8E7A34"
   },
-  green: {
-    confirmedBackground: "#86efac",
-    confirmedBorder: "#22c55e",
-    confirmedText: "#064e3b",
-    tentativeBackground: "#f0fdf4",
-    tentativeBorder: "#86efac",
-    tentativeText: "#166534"
+  lime: {
+    confirmedBackground: "#DDF2C8",
+    confirmedBorder: "#B9DB98",
+    confirmedText: "#5F7F49",
+    tentativeBackground: "#F5FBEF",
+    tentativeBorder: "#A7CF7C",
+    tentativeText: "#68894E"
   },
   gray: {
-    confirmedBackground: "#cbd5e1",
-    confirmedBorder: "#94a3b8",
-    confirmedText: "#0f172a",
-    tentativeBackground: "#f8fafc",
-    tentativeBorder: "#cbd5e1",
-    tentativeText: "#334155"
+    confirmedBackground: "#E7E7EB",
+    confirmedBorder: "#C9CAD3",
+    confirmedText: "#666A78",
+    tentativeBackground: "#F8F8FA",
+    tentativeBorder: "#B8BAC5",
+    tentativeText: "#707483"
   }
 };
+
+export function normalizeColorKey(value: string): ColorKey {
+  return legacyColorKeyMap[value] ?? "gray";
+}
 
 export function toSettingsRecord(settings: CalendarSetting[]): Record<ScheduleType, CalendarSetting> {
   return scheduleTypeOptions.reduce<Record<ScheduleType, CalendarSetting>>((record, scheduleType) => {
     const setting = settings.find((item) => item.scheduleType === scheduleType);
-    record[scheduleType] = setting ?? defaultCalendarSettings[scheduleType];
+    record[scheduleType] = setting
+      ? {
+          ...setting,
+          colorKey: normalizeColorKey(setting.colorKey)
+        }
+      : defaultCalendarSettings[scheduleType];
     return record;
   }, { ...defaultCalendarSettings });
 }
@@ -110,5 +131,5 @@ export function getScheduleTypeLabel(settings: Record<ScheduleType, CalendarSett
 }
 
 export function getSchedulePalette(settings: Record<ScheduleType, CalendarSetting>, scheduleType: ScheduleType) {
-  return colorPalettes[settings[scheduleType]?.colorKey ?? defaultCalendarSettings[scheduleType].colorKey];
+  return colorPalettes[normalizeColorKey(settings[scheduleType]?.colorKey ?? defaultCalendarSettings[scheduleType].colorKey)];
 }

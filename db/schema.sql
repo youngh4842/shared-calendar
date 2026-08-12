@@ -22,12 +22,12 @@ CREATE TABLE IF NOT EXISTS calendar_settings (
   color_key VARCHAR(20) NOT NULL,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT chk_calendar_setting_type CHECK (schedule_type IN ('A', 'B', 'COMMON')),
-  CONSTRAINT chk_calendar_setting_color CHECK (color_key IN ('blue', 'purple', 'pink', 'orange', 'green', 'gray'))
+  CONSTRAINT chk_calendar_setting_color CHECK (color_key IN ('sky', 'purple', 'pink', 'yellow', 'lime', 'gray'))
 );
 
 INSERT INTO calendar_settings (schedule_type, display_name, color_key)
 VALUES
-  ('A', 'A', 'blue'),
+  ('A', 'A', 'sky'),
   ('B', 'B', 'purple'),
-  ('COMMON', '같이', 'green')
+  ('COMMON', '같이', 'lime')
 ON CONFLICT (schedule_type) DO NOTHING;

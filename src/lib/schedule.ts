@@ -2,7 +2,18 @@ import type { CalendarSetting, ColorKey, ConfirmationStatus, Schedule, ScheduleI
 
 const scheduleTypes = new Set<ScheduleType>(["A", "B", "COMMON"]);
 const confirmationStatuses = new Set<ConfirmationStatus>(["CONFIRMED", "TENTATIVE"]);
-const colorKeys = new Set<ColorKey>(["blue", "purple", "pink", "orange", "green", "gray"]);
+const colorKeys = new Set<ColorKey>(["sky", "purple", "pink", "yellow", "lime", "gray"]);
+const legacyColorKeys: Record<string, ColorKey> = {
+  blue: "sky",
+  orange: "yellow",
+  green: "lime",
+  sky: "sky",
+  purple: "purple",
+  pink: "pink",
+  yellow: "yellow",
+  lime: "lime",
+  gray: "gray"
+};
 const datePattern = /^\d{4}-\d{2}-\d{2}$/;
 const koreaDateFormatter = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Asia/Seoul",
@@ -49,7 +60,7 @@ export function mapCalendarSetting(row: Record<string, unknown>): CalendarSettin
   return {
     scheduleType: row.schedule_type as ScheduleType,
     displayName: String(row.display_name),
-    colorKey: row.color_key as ColorKey
+    colorKey: legacyColorKeys[String(row.color_key)] ?? "gray"
   };
 }
 

@@ -2,7 +2,7 @@ export type ScheduleType = "A" | "B" | "COMMON";
 
 export type ConfirmationStatus = "CONFIRMED" | "TENTATIVE";
 
-export type ColorKey = "blue" | "purple" | "pink" | "orange" | "green" | "gray";
+export type ColorKey = "sky" | "purple" | "pink" | "yellow" | "lime" | "gray";
 
 export type Schedule = {
   id: number;

@@ -134,7 +134,7 @@ Validation 메시지:
   {
     "scheduleType": "A",
     "displayName": "A",
-    "colorKey": "blue"
+    "colorKey": "sky"
   },
   {
     "scheduleType": "B",
@@ -144,18 +144,18 @@ Validation 메시지:
   {
     "scheduleType": "COMMON",
     "displayName": "같이",
-    "colorKey": "green"
+    "colorKey": "lime"
   }
 ]
 ```
 
 허용 색상:
 
-- `blue`
+- `sky`
 - `purple`
 - `pink`
-- `orange`
-- `green`
+- `yellow`
+- `lime`
 - `gray`
 
 ### Holidays API

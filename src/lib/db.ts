@@ -150,15 +150,40 @@ export async function ensureCalendarSettingsTable() {
         color_key VARCHAR(20) NOT NULL,
         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
         CONSTRAINT chk_calendar_setting_type CHECK (schedule_type IN ('A', 'B', 'COMMON')),
-        CONSTRAINT chk_calendar_setting_color CHECK (color_key IN ('blue', 'purple', 'pink', 'orange', 'green', 'gray'))
+        CONSTRAINT chk_calendar_setting_color CHECK (color_key IN ('sky', 'purple', 'pink', 'yellow', 'lime', 'gray'))
       )
     `.then(async () => {
+      await sql`ALTER TABLE calendar_settings DROP CONSTRAINT IF EXISTS chk_calendar_setting_color`;
+      await sql`
+        UPDATE calendar_settings
+        SET color_key = CASE color_key
+          WHEN 'blue' THEN 'sky'
+          WHEN 'orange' THEN 'yellow'
+          WHEN 'green' THEN 'lime'
+          ELSE color_key
+        END
+        WHERE color_key IN ('blue', 'orange', 'green')
+      `;
+      await sql`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1
+            FROM pg_constraint
+            WHERE conname = 'chk_calendar_setting_color'
+          ) THEN
+            ALTER TABLE calendar_settings
+            ADD CONSTRAINT chk_calendar_setting_color
+            CHECK (color_key IN ('sky', 'purple', 'pink', 'yellow', 'lime', 'gray'));
+          END IF;
+        END $$;
+      `;
       await sql`
         INSERT INTO calendar_settings (schedule_type, display_name, color_key)
         VALUES
-          ('A', 'A', 'blue'),
+          ('A', 'A', 'sky'),
           ('B', 'B', 'purple'),
-          ('COMMON', '같이', 'green')
+          ('COMMON', '같이', 'lime')
         ON CONFLICT (schedule_type) DO NOTHING
       `;
     });
