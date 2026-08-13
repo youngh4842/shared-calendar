@@ -33,3 +33,11 @@ VALUES
   ('B', 'B', 'purple'),
   ('COMMON', '같이', 'lime')
 ON CONFLICT (schedule_type) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS date_decorations (
+  id BIGSERIAL PRIMARY KEY,
+  decoration_date DATE NOT NULL UNIQUE,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS date_decorations_date_idx ON date_decorations (decoration_date);

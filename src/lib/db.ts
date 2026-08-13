@@ -2,6 +2,7 @@ import { neon } from "@neondatabase/serverless";
 
 let schedulesReady: Promise<void> | null = null;
 let settingsReady: Promise<void> | null = null;
+let dateDecorationsReady: Promise<void> | null = null;
 
 export function getSql() {
   const databaseUrl = process.env.DATABASE_URL;
@@ -275,4 +276,23 @@ export async function ensureCalendarSettingsTable() {
   }
 
   return settingsReady;
+}
+
+export async function ensureDateDecorationsTable() {
+  if (!dateDecorationsReady) {
+    const sql = getSql();
+    dateDecorationsReady = sql`
+      CREATE TABLE IF NOT EXISTS date_decorations (
+        id BIGSERIAL PRIMARY KEY,
+        decoration_date DATE NOT NULL UNIQUE,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `.then(async () => {
+      await sql`ALTER TABLE date_decorations ALTER COLUMN decoration_date SET NOT NULL`;
+      await sql`ALTER TABLE date_decorations ALTER COLUMN created_at SET DEFAULT CURRENT_TIMESTAMP`;
+      await sql`CREATE UNIQUE INDEX IF NOT EXISTS date_decorations_date_idx ON date_decorations (decoration_date)`;
+    });
+  }
+
+  return dateDecorationsReady;
 }

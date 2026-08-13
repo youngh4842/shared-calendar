@@ -20,6 +20,10 @@ type ModalState =
   | { mode: "detail"; schedule: Schedule }
   | null;
 
+type DateDecoration = {
+  date: string;
+};
+
 const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
 
 function getYearsInRange(start: string, end: string) {
@@ -55,6 +59,9 @@ export function CalendarView() {
   const [currentTitle, setCurrentTitle] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isDecorationMode, setIsDecorationMode] = useState(false);
+  const [decoratedDates, setDecoratedDates] = useState<Set<string>>(() => new Set());
+  const [pendingDecorations, setPendingDecorations] = useState<Set<string>>(() => new Set());
 
   const fetchSchedules = useCallback(async (start: string, end: string) => {
     setLoading(true);
@@ -97,6 +104,22 @@ export function CalendarView() {
       setHolidaysByDate(nextHolidays);
     } catch {
       setHolidaysByDate({});
+    }
+  }, []);
+
+  const fetchDecorations = useCallback(async (start: string, end: string) => {
+    try {
+      const response = await fetch(`/api/decorations?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error ?? "날짜 꾸미기를 불러오지 못했습니다.");
+      }
+
+      setDecoratedDates(new Set((data as DateDecoration[]).map((decoration) => decoration.date)));
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "날짜 꾸미기를 불러오지 못했습니다.");
+      setDecoratedDates(new Set());
     }
   }, []);
 
@@ -177,10 +200,21 @@ export function CalendarView() {
 
   const getDayCellClassNames = useCallback(
     (arg: DayCellContentArg) => {
-      const holiday = holidaysByDate[formatCalendarDate(arg.date)];
-      return [`calendar-day-${getDayTone(arg.date, holiday)}`];
+      const dateKey = formatCalendarDate(arg.date);
+      const holiday = holidaysByDate[dateKey];
+      const classNames = [`calendar-day-${getDayTone(arg.date, holiday)}`];
+
+      if (decoratedDates.has(dateKey)) {
+        classNames.push("calendar-day-decorated");
+      }
+
+      if (pendingDecorations.has(dateKey)) {
+        classNames.push("calendar-day-decoration-pending");
+      }
+
+      return classNames;
     },
-    [holidaysByDate]
+    [decoratedDates, holidaysByDate, pendingDecorations]
   );
 
   function handleDatesSet(arg: DatesSetArg) {
@@ -199,6 +233,7 @@ export function CalendarView() {
     setLastRange(range);
     void fetchSchedules(range.start, range.end);
     void fetchHolidays(range.start, range.end);
+    void fetchDecorations(range.start, range.end);
   }
 
   function moveMonth(direction: "prev" | "next") {
@@ -211,11 +246,69 @@ export function CalendarView() {
     api?.next();
   }
 
+  async function toggleDateDecoration(date: string) {
+    if (!date || pendingDecorations.has(date)) {
+      return;
+    }
+
+    const shouldRemove = decoratedDates.has(date);
+    setPendingDecorations((previous) => new Set(previous).add(date));
+    setDecoratedDates((previous) => {
+      const next = new Set(previous);
+      if (shouldRemove) {
+        next.delete(date);
+      } else {
+        next.add(date);
+      }
+      return next;
+    });
+
+    try {
+      const response = shouldRemove
+        ? await fetch(`/api/decorations?date=${encodeURIComponent(date)}`, { method: "DELETE" })
+        : await fetch("/api/decorations", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ date })
+          });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error ?? "날짜 꾸미기를 저장하지 못했습니다.");
+      }
+    } catch (caught) {
+      setDecoratedDates((previous) => {
+        const next = new Set(previous);
+        if (shouldRemove) {
+          next.add(date);
+        } else {
+          next.delete(date);
+        }
+        return next;
+      });
+      setError(caught instanceof Error ? caught.message : "날짜 꾸미기를 저장하지 못했습니다.");
+    } finally {
+      setPendingDecorations((previous) => {
+        const next = new Set(previous);
+        next.delete(date);
+        return next;
+      });
+    }
+  }
+
   function handleDateClick(arg: DateClickArg) {
-    setModal({ mode: "create", date: normalizeCalendarDate(arg.dateStr) });
+    const date = normalizeCalendarDate(arg.dateStr);
+
+    if (isDecorationMode) {
+      void toggleDateDecoration(date);
+      return;
+    }
+
+    setModal({ mode: "create", date });
   }
 
   function handleEventClick(arg: EventClickArg) {
+    arg.jsEvent.stopPropagation();
     const schedule = arg.event.extendedProps.schedule as Schedule;
     setModal({ mode: "detail", schedule });
   }
@@ -231,7 +324,7 @@ export function CalendarView() {
   }
 
   return (
-    <section className="rounded-lg border border-white/70 bg-white/90 p-3 shadow-sm sm:p-5">
+    <section className={["rounded-lg border border-white/70 bg-white/90 p-3 shadow-sm sm:p-5", isDecorationMode ? "calendar-decoration-mode" : ""].join(" ")}>
       <div className="calendar-sticky-header">
         <div className="calendar-sticky-toolbar">
           <button type="button" onClick={() => moveMonth("prev")} className="calendar-nav-button" aria-label="이전 달">
@@ -243,6 +336,16 @@ export function CalendarView() {
           <div className="calendar-toolbar-actions">
             <button type="button" onClick={() => moveMonth("next")} className="calendar-nav-button" aria-label="다음 달">
               &gt;
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsDecorationMode((value) => !value)}
+              className={["calendar-decoration-button", isDecorationMode ? "calendar-decoration-button-active" : ""].join(" ")}
+              aria-label="날짜 꾸미기 모드"
+              aria-pressed={isDecorationMode}
+              title="날짜 꾸미기"
+            >
+              ❤️
             </button>
             <Link href="/settings" className="calendar-settings-link" aria-label="캘린더 설정">
               설정
