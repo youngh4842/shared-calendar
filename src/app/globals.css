@@ -323,6 +323,10 @@ textarea {
   display: grid;
 }
 
+.shared-checklist-item {
+  display: grid;
+}
+
 .shared-checklist-row {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto;
@@ -413,7 +417,7 @@ textarea {
 .shared-checklist-confirm {
   display: grid;
   gap: 0.6rem;
-  margin-top: 0.7rem;
+  margin: 0.3rem 0 0.75rem 2.65rem;
   border: 1px solid #f8d8e8;
   border-radius: 8px;
   background: #fffafb;
@@ -426,6 +430,11 @@ textarea {
   font-size: 0.85rem;
 }
 
+.shared-checklist-confirm .shared-checklist-confirm-error {
+  color: #dc2626;
+  font-size: 0.78rem;
+}
+
 .shared-checklist-confirm div {
   display: flex;
   justify-content: flex-end;
@@ -435,6 +444,11 @@ textarea {
 .shared-checklist-confirm .shared-checklist-confirm-delete {
   border-color: #fecdd3;
   color: #9f1239;
+}
+
+.shared-checklist-confirm button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 @media (max-width: 640px) {
@@ -473,5 +487,9 @@ textarea {
   .shared-checklist-drag {
     width: 2.45rem;
     height: 2.45rem;
+  }
+
+  .shared-checklist-confirm {
+    margin-left: 0.4rem;
   }
 }

@@ -58,12 +58,14 @@ async function fetchChecklistItems() {
 }
 
 export function SharedChecklist() {
+  const checklistRef = useRef<HTMLElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [isExpanded, setIsExpanded] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [content, setContent] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState<ChecklistItem | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pendingIds, setPendingIds] = useState<Set<number>>(() => new Set());
@@ -75,6 +77,37 @@ export function SharedChecklist() {
       inputRef.current?.focus();
     }
   }, [isAdding, isExpanded]);
+
+  useEffect(() => {
+    function closeOnOutsidePointer(event: globalThis.PointerEvent) {
+      if (!deleteConfirmId) {
+        return;
+      }
+
+      const target = event.target;
+      if (target instanceof Node && checklistRef.current?.contains(target)) {
+        return;
+      }
+
+      setDeleteConfirmId(null);
+      setDeleteError(null);
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setDeleteConfirmId(null);
+        setDeleteError(null);
+      }
+    }
+
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsidePointer);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [deleteConfirmId]);
 
   useEffect(() => {
     let ignore = false;
@@ -150,6 +183,8 @@ export function SharedChecklist() {
       return;
     }
 
+    setDeleteConfirmId(null);
+    setDeleteError(null);
     setPending(item.id, true);
 
     try {
@@ -189,10 +224,11 @@ export function SharedChecklist() {
       }
 
       setItems((previous) => previous.filter((previousItem) => previousItem.id !== item.id));
-      setDeleteTarget(null);
+      setDeleteConfirmId(null);
+      setDeleteError(null);
       setError(null);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "체크리스트를 삭제하지 못했습니다.");
+      setDeleteError(caught instanceof Error ? caught.message : "체크리스트를 삭제하지 못했습니다.");
     } finally {
       setPending(item.id, false);
     }
@@ -215,6 +251,8 @@ export function SharedChecklist() {
     event.preventDefault();
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
+    setDeleteConfirmId(null);
+    setDeleteError(null);
     setDragState({ id: item.id, isCompleted: item.isCompleted, overId: null, moved: false });
   }
 
@@ -266,9 +304,18 @@ export function SharedChecklist() {
   }
 
   return (
-    <section className="shared-checklist" aria-label="공유 체크리스트">
+    <section ref={checklistRef} className="shared-checklist" aria-label="공유 체크리스트">
       <div className="shared-checklist-toolbar">
-        <button type="button" className="shared-checklist-icon-button" onClick={() => setIsExpanded((value) => !value)} aria-label={isExpanded ? "체크리스트 접기" : "체크리스트 펼치기"}>
+        <button
+          type="button"
+          className="shared-checklist-icon-button"
+          onClick={() => {
+            setIsExpanded((value) => !value);
+            setDeleteConfirmId(null);
+            setDeleteError(null);
+          }}
+          aria-label={isExpanded ? "체크리스트 접기" : "체크리스트 펼치기"}
+        >
           {isExpanded ? "⌄" : ">"}
         </button>
         <button
@@ -276,6 +323,8 @@ export function SharedChecklist() {
           className="shared-checklist-icon-button"
           onClick={() => {
             const wasExpanded = isExpanded;
+            setDeleteConfirmId(null);
+            setDeleteError(null);
             setIsExpanded(true);
             setIsAdding((value) => (wasExpanded ? !value : true));
           }}
@@ -301,55 +350,83 @@ export function SharedChecklist() {
               const isPending = pendingIds.has(item.id);
               const isDragging = dragState?.id === item.id;
               const isDragTarget = dragState?.overId === item.id;
+              const isConfirmingDelete = deleteConfirmId === item.id;
 
               return (
                 <div
                   key={item.id}
-                  className={[
-                    "shared-checklist-row",
-                    item.isCompleted ? "shared-checklist-row-completed" : "",
-                    isPending ? "shared-checklist-row-pending" : "",
-                    isDragging ? "shared-checklist-row-dragging" : "",
-                    isDragTarget ? "shared-checklist-row-drag-target" : ""
-                  ].join(" ")}
-                  data-checklist-row-id={item.id}
+                  className="shared-checklist-item"
+                  onClick={() => {
+                    if (deleteConfirmId !== null && !isConfirmingDelete) {
+                      setDeleteConfirmId(null);
+                      setDeleteError(null);
+                    }
+                  }}
                 >
-                  <button type="button" className="shared-checklist-check" onClick={() => toggleItem(item)} disabled={isPending} aria-label={item.isCompleted ? "완료 해제" : "완료"}>
-                    {item.isCompleted ? "☑" : "□"}
-                  </button>
-                  <span className="shared-checklist-item-content">{item.content}</span>
-                  <button type="button" className="shared-checklist-delete" onClick={() => setDeleteTarget(item)} disabled={isPending} aria-label="삭제">
-                    ×
-                  </button>
-                  <button
-                    type="button"
-                    className="shared-checklist-drag"
-                    onPointerDown={(event) => handleDragStart(event, item)}
-                    onPointerMove={handleDragMove}
-                    onPointerUp={handleDragEnd}
-                    onPointerCancel={() => setDragState(null)}
-                    aria-label="순서 이동"
+                  <div
+                    className={[
+                      "shared-checklist-row",
+                      item.isCompleted ? "shared-checklist-row-completed" : "",
+                      isPending ? "shared-checklist-row-pending" : "",
+                      isDragging ? "shared-checklist-row-dragging" : "",
+                      isDragTarget ? "shared-checklist-row-drag-target" : ""
+                    ].join(" ")}
+                    data-checklist-row-id={item.id}
                   >
-                    =
-                  </button>
+                    <button type="button" className="shared-checklist-check" onClick={() => toggleItem(item)} disabled={isPending} aria-label={item.isCompleted ? "완료 해제" : "완료"}>
+                      {item.isCompleted ? "☑" : "□"}
+                    </button>
+                    <span className="shared-checklist-item-content">{item.content}</span>
+                    <button
+                      type="button"
+                      className="shared-checklist-delete"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setDeleteConfirmId((value) => (value === item.id ? null : item.id));
+                        setDeleteError(null);
+                      }}
+                      disabled={isPending}
+                      aria-label="삭제"
+                    >
+                      ×
+                    </button>
+                    <button
+                      type="button"
+                      className="shared-checklist-drag"
+                      onPointerDown={(event) => handleDragStart(event, item)}
+                      onPointerMove={handleDragMove}
+                      onPointerUp={handleDragEnd}
+                      onPointerCancel={() => setDragState(null)}
+                      aria-label="순서 이동"
+                    >
+                      =
+                    </button>
+                  </div>
+
+                  {isConfirmingDelete ? (
+                    <div className="shared-checklist-confirm" role="dialog" aria-modal="false" aria-label="체크리스트 삭제 확인" onClick={(event) => event.stopPropagation()}>
+                      <p>이 항목을 삭제하시겠습니까?</p>
+                      {deleteError ? <p className="shared-checklist-confirm-error">{deleteError}</p> : null}
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDeleteConfirmId(null);
+                            setDeleteError(null);
+                          }}
+                        >
+                          취소
+                        </button>
+                        <button type="button" className="shared-checklist-confirm-delete" onClick={() => deleteItem(item)} disabled={isPending}>
+                          삭제
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               );
             })}
           </div>
-
-          {deleteTarget ? (
-            <div className="shared-checklist-confirm" role="dialog" aria-modal="false" aria-label="체크리스트 삭제 확인">
-              <p>이 항목을 삭제하시겠습니까?</p>
-              <div>
-                <button type="button" onClick={() => setDeleteTarget(null)}>
-                  취소
-                </button>
-                <button type="button" className="shared-checklist-confirm-delete" onClick={() => deleteItem(deleteTarget)}>
-                  삭제
-                </button>
-              </div>
-            </div>
-          ) : null}
         </div>
       ) : null}
     </section>
