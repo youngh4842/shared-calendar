@@ -3,6 +3,7 @@ import { neon } from "@neondatabase/serverless";
 let schedulesReady: Promise<void> | null = null;
 let settingsReady: Promise<void> | null = null;
 let dateDecorationsReady: Promise<void> | null = null;
+let checklistReady: Promise<void> | null = null;
 
 export function getSql() {
   const databaseUrl = process.env.DATABASE_URL;
@@ -295,4 +296,34 @@ export async function ensureDateDecorationsTable() {
   }
 
   return dateDecorationsReady;
+}
+
+export async function ensureChecklistItemsTable() {
+  if (!checklistReady) {
+    const sql = getSql();
+    checklistReady = sql`
+      CREATE TABLE IF NOT EXISTS checklist_items (
+        id BIGSERIAL PRIMARY KEY,
+        content VARCHAR(300) NOT NULL,
+        is_completed BOOLEAN NOT NULL DEFAULT FALSE,
+        sort_order INTEGER NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `.then(async () => {
+      await sql`ALTER TABLE checklist_items ADD COLUMN IF NOT EXISTS content VARCHAR(300)`;
+      await sql`ALTER TABLE checklist_items ADD COLUMN IF NOT EXISTS is_completed BOOLEAN NOT NULL DEFAULT FALSE`;
+      await sql`ALTER TABLE checklist_items ADD COLUMN IF NOT EXISTS sort_order INTEGER`;
+      await sql`ALTER TABLE checklist_items ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP`;
+      await sql`ALTER TABLE checklist_items ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP`;
+      await sql`UPDATE checklist_items SET content = LEFT(TRIM(content), 300) WHERE content IS NOT NULL`;
+      await sql`UPDATE checklist_items SET sort_order = id WHERE sort_order IS NULL`;
+      await sql`ALTER TABLE checklist_items ALTER COLUMN content SET NOT NULL`;
+      await sql`ALTER TABLE checklist_items ALTER COLUMN content TYPE VARCHAR(300)`;
+      await sql`ALTER TABLE checklist_items ALTER COLUMN sort_order SET NOT NULL`;
+      await sql`CREATE INDEX IF NOT EXISTS checklist_items_order_idx ON checklist_items (is_completed, sort_order, id)`;
+    });
+  }
+
+  return checklistReady;
 }

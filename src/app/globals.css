@@ -237,6 +237,206 @@ textarea {
   border-style: solid;
 }
 
+.shared-checklist {
+  margin-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+.shared-checklist-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 2.65rem;
+  padding: 0.25rem 0.1rem;
+}
+
+.shared-checklist-icon-button {
+  display: inline-flex;
+  width: 2.35rem;
+  height: 2.35rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #475569;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.shared-checklist-icon-button:hover,
+.shared-checklist-icon-button:focus {
+  border-color: #e8afcb;
+  background: #fff3f8;
+  color: #0f172a;
+}
+
+.shared-checklist-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.45rem;
+  padding: 0.1rem 0 0.6rem;
+}
+
+.shared-checklist-form input {
+  min-width: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 0.65rem 0.75rem;
+  color: #0f172a;
+  outline: none;
+}
+
+.shared-checklist-form input:focus {
+  border-color: #e8afcb;
+  box-shadow: 0 0 0 3px rgb(232 175 203 / 18%);
+}
+
+.shared-checklist-form button,
+.shared-checklist-confirm button {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 0 0.75rem;
+  color: #0f172a;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.shared-checklist-form button:hover,
+.shared-checklist-form button:focus,
+.shared-checklist-confirm button:hover,
+.shared-checklist-confirm button:focus {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.shared-checklist-error {
+  margin: 0 0 0.55rem;
+  color: #dc2626;
+  font-size: 0.78rem;
+}
+
+.shared-checklist-list {
+  display: grid;
+}
+
+.shared-checklist-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.65rem;
+  border-top: 1px solid #f1f5f9;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.shared-checklist-row:first-child {
+  border-top-color: #e5e7eb;
+}
+
+.shared-checklist-check,
+.shared-checklist-delete,
+.shared-checklist-drag {
+  display: inline-flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: #475569;
+  line-height: 1;
+}
+
+.shared-checklist-check {
+  font-size: 1.05rem;
+}
+
+.shared-checklist-delete {
+  color: #9f1239;
+  font-size: 1rem;
+}
+
+.shared-checklist-drag {
+  color: #64748b;
+  cursor: grab;
+  font-size: 1rem;
+  font-weight: 700;
+  touch-action: none;
+  user-select: none;
+}
+
+.shared-checklist-check:hover,
+.shared-checklist-check:focus,
+.shared-checklist-delete:hover,
+.shared-checklist-delete:focus,
+.shared-checklist-drag:hover,
+.shared-checklist-drag:focus {
+  border-color: #e5e7eb;
+  background: #f8fafc;
+}
+
+.shared-checklist-content {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: 0.45rem 0;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.shared-checklist-row-completed .shared-checklist-content {
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+
+.shared-checklist-row-pending {
+  opacity: 0.65;
+}
+
+.shared-checklist-row-dragging {
+  background: #fff3f8;
+}
+
+.shared-checklist-row-drag-target {
+  box-shadow: inset 0 0 0 1px #f8d8e8;
+}
+
+.shared-checklist-row-dragging .shared-checklist-drag {
+  cursor: grabbing;
+}
+
+.shared-checklist-confirm {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.7rem;
+  border: 1px solid #f8d8e8;
+  border-radius: 8px;
+  background: #fffafb;
+  padding: 0.75rem;
+}
+
+.shared-checklist-confirm p {
+  margin: 0;
+  color: #334155;
+  font-size: 0.85rem;
+}
+
+.shared-checklist-confirm div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.shared-checklist-confirm .shared-checklist-confirm-delete {
+  border-color: #fecdd3;
+  color: #9f1239;
+}
+
 @media (max-width: 640px) {
   .calendar-sticky-toolbar {
     gap: 0.4rem;
@@ -261,5 +461,17 @@ textarea {
 
   .calendar-holiday-name {
     font-size: 0.62rem;
+  }
+
+  .shared-checklist-row {
+    gap: 0.2rem;
+    min-height: 2.9rem;
+  }
+
+  .shared-checklist-check,
+  .shared-checklist-delete,
+  .shared-checklist-drag {
+    width: 2.45rem;
+    height: 2.45rem;
   }
 }

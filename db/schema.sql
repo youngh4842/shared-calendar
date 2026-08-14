@@ -41,3 +41,14 @@ CREATE TABLE IF NOT EXISTS date_decorations (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS date_decorations_date_idx ON date_decorations (decoration_date);
+
+CREATE TABLE IF NOT EXISTS checklist_items (
+  id BIGSERIAL PRIMARY KEY,
+  content VARCHAR(300) NOT NULL,
+  is_completed BOOLEAN NOT NULL DEFAULT FALSE,
+  sort_order INTEGER NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS checklist_items_order_idx ON checklist_items (is_completed, sort_order, id);

@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ScheduleDetailModal } from "@/components/ScheduleDetailModal/ScheduleDetailModal";
 import { ScheduleModal } from "@/components/ScheduleModal/ScheduleModal";
+import { SharedChecklist } from "@/components/SharedChecklist/SharedChecklist";
 import type { Holiday } from "@/types/holiday";
 import type { CalendarSetting, Schedule, ScheduleType } from "@/types/schedule";
 import { defaultCalendarSettings, getSchedulePalette, toSettingsRecord } from "@/utils/scheduleColors";
@@ -386,6 +387,8 @@ export function CalendarView() {
         dateClick={handleDateClick}
         eventClick={handleEventClick}
       />
+
+      <SharedChecklist />
 
       {modal?.mode === "create" ? (
         <ScheduleModal
