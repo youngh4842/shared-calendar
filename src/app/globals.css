@@ -381,7 +381,7 @@ textarea {
   background: #f8fafc;
 }
 
-.shared-checklist-content {
+.shared-checklist-item-content {
   min-width: 0;
   overflow-wrap: anywhere;
   padding: 0.45rem 0;
@@ -389,7 +389,7 @@ textarea {
   line-height: 1.35;
 }
 
-.shared-checklist-row-completed .shared-checklist-content {
+.shared-checklist-row-completed .shared-checklist-item-content {
   color: #94a3b8;
   text-decoration: line-through;
 }
