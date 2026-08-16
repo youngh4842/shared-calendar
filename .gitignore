@@ -16,3 +16,6 @@ pnpm-debug.log*
 
 .vercel
 .env*
+
+.tools
+.node-*.zip

@@ -52,3 +52,14 @@ CREATE TABLE IF NOT EXISTS checklist_items (
 );
 
 CREATE INDEX IF NOT EXISTS checklist_items_order_idx ON checklist_items (is_completed, sort_order, id);
+
+CREATE TABLE IF NOT EXISTS dday_items (
+  id BIGSERIAL PRIMARY KEY,
+  title VARCHAR(100) NOT NULL,
+  target_date DATE NOT NULL,
+  sort_order INTEGER NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS dday_items_order_idx ON dday_items (sort_order, id);

@@ -243,6 +243,46 @@ textarea {
   background: #ffffff;
 }
 
+.calendar-decoration-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.calendar-refresh-spinning {
+  display: inline-block;
+  animation: calendar-refresh-spin 0.9s linear infinite;
+}
+
+@keyframes calendar-refresh-spin {
+  to { transform: rotate(360deg); }
+}
+
+.dday-section { margin-top: 1rem; border-block: 1px solid #e5e7eb; padding: .65rem .1rem; background: #fff; }
+.dday-list { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; }
+.dday-add, .dday-chip { min-height: 2.2rem; border: 1px solid transparent; border-radius: 999px; background: transparent; color: #334155; }
+.dday-add { width: 2.2rem; font-size: 1.3rem; font-weight: 700; }
+.dday-chip { border-color: #e5e7eb; padding: .4rem .75rem; font-size: .86rem; }
+.dday-chip strong { margin-left: .15rem; font-weight: 700; }
+.dday-add:hover, .dday-add:focus, .dday-chip:hover, .dday-chip:focus { border-color: #e8afcb; background: #fff3f8; }
+.dday-chip-today { border-color: #e8afcb; background: #fff3f8; box-shadow: 0 1px 8px rgb(232 175 203 / 18%); }
+.dday-modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 1rem; background: rgb(15 23 42 / 42%); }
+.dday-modal { width: min(100%, 25rem); border-radius: 12px; background: #fff; padding: 1.2rem; box-shadow: 0 18px 50px rgb(15 23 42 / 25%); }
+.dday-modal h2 { margin: 0 0 1rem; font-size: 1.05rem; }
+.dday-modal form, .dday-modal label { display: grid; gap: .5rem; }
+.dday-modal form { gap: .9rem; }
+.dday-modal label { color: #334155; font-size: .85rem; font-weight: 700; }
+.dday-modal input { min-width: 0; border: 1px solid #cbd5e1; border-radius: 8px; padding: .65rem .75rem; outline: none; }
+.dday-modal input:focus { border-color: #e8afcb; box-shadow: 0 0 0 3px rgb(232 175 203 / 18%); }
+.dday-error { margin: .55rem 0 0; color: #dc2626; font-size: .78rem; }
+.dday-actions, .dday-actions > div, .dday-delete-confirm > div { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.dday-actions button, .dday-delete-confirm button { border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; padding: .55rem .8rem; font-size: .84rem; font-weight: 700; }
+.dday-actions button:hover, .dday-delete-confirm button:hover { background: #f8fafc; }
+.dday-actions .dday-danger, .dday-delete-confirm .dday-danger { border-color: #fecdd3; color: #9f1239; }
+.dday-delete-confirm { display: grid; gap: .65rem; border: 1px solid #f8d8e8; border-radius: 8px; background: #fffafb; padding: .75rem; }
+.dday-delete-confirm p { margin: 0; color: #334155; font-size: .85rem; }
+.dday-delete-confirm > div { justify-content: flex-end; }
+.dday-modal button:disabled { cursor: not-allowed; opacity: .6; }
+
 .shared-checklist-toolbar {
   display: flex;
   align-items: center;

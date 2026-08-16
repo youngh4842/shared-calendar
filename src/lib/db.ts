@@ -4,6 +4,7 @@ let schedulesReady: Promise<void> | null = null;
 let settingsReady: Promise<void> | null = null;
 let dateDecorationsReady: Promise<void> | null = null;
 let checklistReady: Promise<void> | null = null;
+let ddayReady: Promise<void> | null = null;
 
 export function getSql() {
   const databaseUrl = process.env.DATABASE_URL;
@@ -326,4 +327,24 @@ export async function ensureChecklistItemsTable() {
   }
 
   return checklistReady;
+}
+
+export async function ensureDDayItemsTable() {
+  if (!ddayReady) {
+    const sql = getSql();
+    ddayReady = sql`
+      CREATE TABLE IF NOT EXISTS dday_items (
+        id BIGSERIAL PRIMARY KEY,
+        title VARCHAR(100) NOT NULL,
+        target_date DATE NOT NULL,
+        sort_order INTEGER NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `.then(async () => {
+      await sql`CREATE INDEX IF NOT EXISTS dday_items_order_idx ON dday_items (sort_order, id)`;
+    });
+  }
+
+  return ddayReady;
 }

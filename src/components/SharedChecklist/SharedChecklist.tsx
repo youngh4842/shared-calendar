@@ -1,7 +1,7 @@
 "use client";
 
 import type { PointerEvent } from "react";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import type { ChecklistItem } from "@/types/checklist";
 import { sortChecklistItems } from "@/lib/checklist";
 
@@ -47,7 +47,7 @@ function getGroupPayload(items: ChecklistItem[], isCompleted: boolean) {
 }
 
 async function fetchChecklistItems() {
-  const response = await fetch("/api/checklist");
+  const response = await fetch("/api/checklist", { cache: "no-store" });
   const data = await response.json();
 
   if (!response.ok) {
@@ -57,7 +57,11 @@ async function fetchChecklistItems() {
   return sortChecklistItems(data as ChecklistItem[]);
 }
 
-export function SharedChecklist() {
+export type SharedChecklistHandle = {
+  refresh: () => Promise<boolean>;
+};
+
+export const SharedChecklist = forwardRef<SharedChecklistHandle>(function SharedChecklist(_props, ref) {
   const checklistRef = useRef<HTMLElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [items, setItems] = useState<ChecklistItem[]>([]);
@@ -71,6 +75,20 @@ export function SharedChecklist() {
   const [pendingIds, setPendingIds] = useState<Set<number>>(() => new Set());
 
   const sortedItems = useMemo(() => sortChecklistItems(items), [items]);
+
+  async function refreshItems() {
+    try {
+      const nextItems = await fetchChecklistItems();
+      setItems(nextItems);
+      setError(null);
+      return true;
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "체크리스트를 불러오지 못했습니다.");
+      return false;
+    }
+  }
+
+  useImperativeHandle(ref, () => ({ refresh: refreshItems }));
 
   useEffect(() => {
     if (isExpanded && isAdding) {
@@ -113,18 +131,8 @@ export function SharedChecklist() {
     let ignore = false;
 
     async function loadItems() {
-      try {
-        const nextItems = await fetchChecklistItems();
-
-        if (!ignore) {
-          setItems(nextItems);
-          setError(null);
-        }
-      } catch (caught) {
-        if (!ignore) {
-          setError(caught instanceof Error ? caught.message : "체크리스트를 불러오지 못했습니다.");
-        }
-      }
+      const nextItems = await fetchChecklistItems().catch(() => null);
+      if (!ignore && nextItems) setItems(nextItems);
     }
 
     void loadItems();
@@ -431,4 +439,4 @@ export function SharedChecklist() {
       ) : null}
     </section>
   );
-}
+});

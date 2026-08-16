@@ -9,7 +9,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ScheduleDetailModal } from "@/components/ScheduleDetailModal/ScheduleDetailModal";
 import { ScheduleModal } from "@/components/ScheduleModal/ScheduleModal";
-import { SharedChecklist } from "@/components/SharedChecklist/SharedChecklist";
+import { SharedChecklist, type SharedChecklistHandle } from "@/components/SharedChecklist/SharedChecklist";
+import { DDaySection, type DDaySectionHandle } from "@/components/DDaySection/DDaySection";
 import type { Holiday } from "@/types/holiday";
 import type { CalendarSetting, Schedule, ScheduleType } from "@/types/schedule";
 import { defaultCalendarSettings, getSchedulePalette, toSettingsRecord } from "@/utils/scheduleColors";
@@ -52,6 +53,9 @@ function getDayTone(date: Date, holiday: Holiday | undefined) {
 
 export function CalendarView() {
   const calendarRef = useRef<FullCalendar | null>(null);
+  const ddayRef = useRef<DDaySectionHandle | null>(null);
+  const checklistRef = useRef<SharedChecklistHandle | null>(null);
+  const refreshingRef = useRef(false);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [holidaysByDate, setHolidaysByDate] = useState<Record<string, Holiday>>({});
   const [settings, setSettings] = useState<Record<ScheduleType, CalendarSetting>>(defaultCalendarSettings);
@@ -63,13 +67,15 @@ export function CalendarView() {
   const [isDecorationMode, setIsDecorationMode] = useState(false);
   const [decoratedDates, setDecoratedDates] = useState<Set<string>>(() => new Set());
   const [pendingDecorations, setPendingDecorations] = useState<Set<string>>(() => new Set());
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isDDayModalOpen, setIsDDayModalOpen] = useState(false);
 
   const fetchSchedules = useCallback(async (start: string, end: string) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(`/api/schedules?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
+      const response = await fetch(`/api/schedules?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`, { cache: "no-store" });
       const data = await response.json();
 
       if (!response.ok) {
@@ -77,8 +83,10 @@ export function CalendarView() {
       }
 
       setSchedules(data);
+      return true;
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "일정을 불러오지 못했습니다.");
+      return false;
     } finally {
       setLoading(false);
     }
@@ -103,14 +111,15 @@ export function CalendarView() {
       }, {});
 
       setHolidaysByDate(nextHolidays);
+      return true;
     } catch {
-      setHolidaysByDate({});
+      return false;
     }
   }, []);
 
   const fetchDecorations = useCallback(async (start: string, end: string) => {
     try {
-      const response = await fetch(`/api/decorations?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
+      const response = await fetch(`/api/decorations?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`, { cache: "no-store" });
       const data = await response.json();
 
       if (!response.ok) {
@@ -118,46 +127,55 @@ export function CalendarView() {
       }
 
       setDecoratedDates(new Set((data as DateDecoration[]).map((decoration) => decoration.date)));
+      return true;
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "날짜 꾸미기를 불러오지 못했습니다.");
-      setDecoratedDates(new Set());
+      return false;
+    }
+  }, []);
+
+  const fetchSettings = useCallback(async () => {
+    try {
+      const response = await fetch("/api/settings", { cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "설정을 불러오지 못했습니다.");
+      setSettings(toSettingsRecord(data));
+      return true;
+    } catch {
+      return false;
     }
   }, []);
 
   useEffect(() => {
-    let ignore = false;
-
-    async function loadSettings() {
-      try {
-        const response = await fetch("/api/settings");
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error ?? "설정을 불러오지 못했습니다.");
-        }
-
-        if (!ignore) {
-          setSettings(toSettingsRecord(data));
-        }
-      } catch {
-        if (!ignore) {
-          setSettings(defaultCalendarSettings);
-        }
-      }
-    }
-
-    void loadSettings();
-
-    return () => {
-      ignore = true;
-    };
-  }, []);
+    const timer = window.setTimeout(() => { void fetchSettings(); }, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchSettings]);
 
   const refresh = useCallback(() => {
     if (lastRange) {
       void fetchSchedules(lastRange.start, lastRange.end);
     }
   }, [fetchSchedules, lastRange]);
+
+  async function refreshSharedData() {
+    if (refreshingRef.current || !lastRange || modal || isDDayModalOpen) return;
+    refreshingRef.current = true;
+    setIsRefreshing(true);
+    setError(null);
+
+    const results = await Promise.allSettled([
+      fetchSchedules(lastRange.start, lastRange.end),
+      fetchDecorations(lastRange.start, lastRange.end),
+      fetchHolidays(lastRange.start, lastRange.end),
+      fetchSettings(),
+      ddayRef.current?.refresh() ?? Promise.resolve(true),
+      checklistRef.current?.refresh() ?? Promise.resolve(true)
+    ]);
+    const hasFailure = results.some((result) => result.status === "rejected" || result.value === false);
+    if (hasFailure) setError("일부 데이터를 새로고침하지 못했습니다. 기존 데이터를 유지합니다.");
+    refreshingRef.current = false;
+    setIsRefreshing(false);
+  }
 
   const events = useMemo<EventInput[]>(
     () =>
@@ -348,8 +366,18 @@ export function CalendarView() {
             >
               ❤️
             </button>
-            <Link href="/settings" className="calendar-settings-link" aria-label="캘린더 설정">
-              설정
+            <button
+              type="button"
+              onClick={() => void refreshSharedData()}
+              className="calendar-decoration-button"
+              aria-label="공유 데이터 새로고침"
+              title="새로고침"
+              disabled={isRefreshing || Boolean(modal) || isDDayModalOpen || !lastRange}
+            >
+              <span className={isRefreshing ? "calendar-refresh-spinning" : ""} aria-hidden="true">↻</span>
+            </button>
+            <Link href="/settings" className="calendar-decoration-button" aria-label="설정" title="설정">
+              <span aria-hidden="true">⚙️</span>
             </Link>
           </div>
         </div>
@@ -388,7 +416,8 @@ export function CalendarView() {
         eventClick={handleEventClick}
       />
 
-      <SharedChecklist />
+      <DDaySection ref={ddayRef} onModalOpenChange={setIsDDayModalOpen} />
+      <SharedChecklist ref={checklistRef} />
 
       {modal?.mode === "create" ? (
         <ScheduleModal
