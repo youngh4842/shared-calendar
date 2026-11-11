@@ -19,3 +19,4 @@ pnpm-debug.log*
 
 .tools
 .node-*.zip
+*.tsbuildinfo

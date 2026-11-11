@@ -37,6 +37,7 @@
   - 날짜 꾸미기 모드
   - 공유 데이터 새로고침
   - D-Day 영역
+  - 예약 푸시 알림 영역
   - 공유 체크리스트 영역
 
 - `/settings`
@@ -65,6 +66,15 @@
 - `POST /api/ddays`
 - `PUT /api/ddays/[id]`
 - `DELETE /api/ddays/[id]`
+- `GET /api/reminders`
+- `POST /api/reminders`
+- `PUT /api/reminders/[id]`
+- `DELETE /api/reminders/[id]`
+- `GET /api/push/config`
+- `POST /api/push/subscriptions`
+- `DELETE /api/push/subscriptions`
+- `POST /api/push/test`
+- `GET /api/cron/notifications`
 
 ### 주요 테이블
 
@@ -83,6 +93,15 @@
 
 - `dday_items`
   - D-Day 항목
+
+- `notification_reminders`
+  - 직접 입력 또는 캘린더 일정에 연결한 예약 알림
+  - 한국 시간 입력을 `TIMESTAMPTZ`로 저장하고 발송 여부와 점유 상태를 관리
+
+- `push_subscriptions`
+  - Android Chrome, iOS 홈 화면 웹 앱 등 기기별 Web Push 구독 정보
+  - 현재 초기 테스트 단계에서는 Apple 모바일 구독만 허용하고 발송 대상으로 사용
+  - 등록된 Apple 기기에 즉시 테스트 푸시를 보내는 기능 제공
 
 ## 주요 결정사항
 
@@ -151,9 +170,12 @@ WHERE start_date <= 조회_종료일
    - 매주/매월 반복
    - 반복 일정 수정 정책
 
-4. 알림 기능
-   - 일정 전 알림
-   - D-Day 알림
+4. 알림 기능 운영 설정
+   - VAPID 공개키/비밀키 및 `CRON_SECRET` 환경 변수 설정
+   - 1분 단위 발송이 필요하면 Vercel Pro Cron 또는 외부 1분 스케줄러 연결
+   - iPhone은 iOS 16.4 이상에서 홈 화면 웹 앱으로 설치 후 알림 권한 허용
+   - 알림의 캘린더 일정 선택지는 한국 시간 기준 오늘 이후 일정만 표시
+   - 예약 시간이 지난 알림은 목록에서 제외하고 발송 완료 후 DB에서 삭제
 
 5. 테스트 보강
    - API validation 테스트

@@ -11,6 +11,7 @@ import { ScheduleDetailModal } from "@/components/ScheduleDetailModal/ScheduleDe
 import { ScheduleModal } from "@/components/ScheduleModal/ScheduleModal";
 import { SharedChecklist, type SharedChecklistHandle } from "@/components/SharedChecklist/SharedChecklist";
 import { DDaySection, type DDaySectionHandle } from "@/components/DDaySection/DDaySection";
+import { NotificationSection, type NotificationSectionHandle } from "@/components/NotificationSection/NotificationSection";
 import type { Holiday } from "@/types/holiday";
 import type { CalendarSetting, Schedule, ScheduleType } from "@/types/schedule";
 import { defaultCalendarSettings, getSchedulePalette, toSettingsRecord } from "@/utils/scheduleColors";
@@ -55,6 +56,7 @@ export function CalendarView() {
   const calendarRef = useRef<FullCalendar | null>(null);
   const ddayRef = useRef<DDaySectionHandle | null>(null);
   const checklistRef = useRef<SharedChecklistHandle | null>(null);
+  const notificationRef = useRef<NotificationSectionHandle | null>(null);
   const refreshingRef = useRef(false);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [holidaysByDate, setHolidaysByDate] = useState<Record<string, Holiday>>({});
@@ -69,6 +71,7 @@ export function CalendarView() {
   const [pendingDecorations, setPendingDecorations] = useState<Set<string>>(() => new Set());
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDDayModalOpen, setIsDDayModalOpen] = useState(false);
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
 
   const fetchSchedules = useCallback(async (start: string, end: string) => {
     setLoading(true);
@@ -158,7 +161,7 @@ export function CalendarView() {
   }, [fetchSchedules, lastRange]);
 
   async function refreshSharedData() {
-    if (refreshingRef.current || !lastRange || modal || isDDayModalOpen) return;
+    if (refreshingRef.current || !lastRange || modal || isDDayModalOpen || isNotificationModalOpen) return;
     refreshingRef.current = true;
     setIsRefreshing(true);
     setError(null);
@@ -169,6 +172,7 @@ export function CalendarView() {
       fetchHolidays(lastRange.start, lastRange.end),
       fetchSettings(),
       ddayRef.current?.refresh() ?? Promise.resolve(true),
+      notificationRef.current?.refresh() ?? Promise.resolve(true),
       checklistRef.current?.refresh() ?? Promise.resolve(true)
     ]);
     const hasFailure = results.some((result) => result.status === "rejected" || result.value === false);
@@ -372,7 +376,7 @@ export function CalendarView() {
               className="calendar-decoration-button"
               aria-label="공유 데이터 새로고침"
               title="새로고침"
-              disabled={isRefreshing || Boolean(modal) || isDDayModalOpen || !lastRange}
+              disabled={isRefreshing || Boolean(modal) || isDDayModalOpen || isNotificationModalOpen || !lastRange}
             >
               <span className={isRefreshing ? "calendar-refresh-spinning" : ""} aria-hidden="true">↻</span>
             </button>
@@ -417,6 +421,7 @@ export function CalendarView() {
       />
 
       <DDaySection ref={ddayRef} onModalOpenChange={setIsDDayModalOpen} />
+      <NotificationSection ref={notificationRef} onModalOpenChange={setIsNotificationModalOpen} />
       <SharedChecklist ref={checklistRef} />
 
       {modal?.mode === "create" ? (

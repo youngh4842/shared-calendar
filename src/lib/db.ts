@@ -5,6 +5,8 @@ let settingsReady: Promise<void> | null = null;
 let dateDecorationsReady: Promise<void> | null = null;
 let checklistReady: Promise<void> | null = null;
 let ddayReady: Promise<void> | null = null;
+let remindersReady: Promise<void> | null = null;
+let pushSubscriptionsReady: Promise<void> | null = null;
 
 export function getSql() {
   const databaseUrl = process.env.DATABASE_URL;
@@ -347,4 +349,52 @@ export async function ensureDDayItemsTable() {
   }
 
   return ddayReady;
+}
+
+export async function ensureRemindersTable() {
+  if (!remindersReady) {
+    remindersReady = (async () => {
+      await ensureSchedulesTable();
+      const sql = getSql();
+      await sql`
+        CREATE TABLE IF NOT EXISTS notification_reminders (
+          id BIGSERIAL PRIMARY KEY,
+          title VARCHAR(120) NOT NULL,
+          body VARCHAR(500) NOT NULL,
+          scheduled_at TIMESTAMPTZ NOT NULL,
+          schedule_id BIGINT REFERENCES schedules(id) ON DELETE SET NULL,
+          claimed_at TIMESTAMPTZ,
+          sent_at TIMESTAMPTZ,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `;
+      await sql`CREATE INDEX IF NOT EXISTS notification_reminders_due_idx ON notification_reminders (sent_at, scheduled_at)`;
+    })();
+  }
+
+  return remindersReady;
+}
+
+export async function ensurePushSubscriptionsTable() {
+  if (!pushSubscriptionsReady) {
+    const sql = getSql();
+    pushSubscriptionsReady = sql`
+      CREATE TABLE IF NOT EXISTS push_subscriptions (
+        id BIGSERIAL PRIMARY KEY,
+        endpoint TEXT NOT NULL UNIQUE,
+        p256dh TEXT NOT NULL,
+        auth TEXT NOT NULL,
+        user_agent VARCHAR(500),
+        device_platform VARCHAR(10) NOT NULL DEFAULT 'OTHER',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `.then(async () => {
+      await sql`ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS device_platform VARCHAR(10) NOT NULL DEFAULT 'OTHER'`;
+      await sql`CREATE UNIQUE INDEX IF NOT EXISTS push_subscriptions_endpoint_idx ON push_subscriptions (endpoint)`;
+    });
+  }
+
+  return pushSubscriptionsReady;
 }

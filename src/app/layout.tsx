@@ -3,7 +3,13 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Between Days",
-  description: "Between Days"
+  description: "Between Days",
+  applicationName: "Between Days",
+  appleWebApp: {
+    capable: true,
+    title: "Between Days",
+    statusBarStyle: "default"
+  }
 };
 
 export const viewport: Viewport = {

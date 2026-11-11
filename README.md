@@ -1,5 +1,22 @@
 # Between Days
 
+## 예약 푸시 알림
+
+알림은 PWA Web Push 방식으로 동작합니다. Android Chrome에서는 사이트에서 알림을 켜면 되고, iPhone은 iOS 16.4 이상에서 사이트를 홈 화면에 추가한 뒤 설치된 Between Days를 열어 알림을 켜야 합니다.
+
+현재 초기 기기 테스트 단계에서는 Apple 모바일 기기만 구독과 발송을 허용합니다. Android 구독은 서버에서도 차단되며, 테스트 완료 후 Apple 제한을 해제할 수 있습니다. 알림에서 캘린더 일정을 고를 때는 한국 시간 기준 오늘 이후 일정만 표시되고, 종료된 알림은 목록에서 사라지며 발송 완료 후 DB에서도 삭제됩니다.
+
+로컬 및 Vercel 환경 변수에는 아래 값을 설정합니다.
+
+```env
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=...
+VAPID_PRIVATE_KEY=...
+VAPID_SUBJECT=mailto:your-email@example.com
+CRON_SECRET=...
+```
+
+VAPID 키는 `npx web-push generate-vapid-keys --json`으로 생성합니다. `/api/cron/notifications`를 `Authorization: Bearer <CRON_SECRET>` 헤더와 함께 1분마다 호출하면 예약 시간이 지난 미발송 알림을 모든 등록 기기로 전송합니다. Vercel Hobby Cron은 1분 단위를 지원하지 않으므로 정확한 시각 발송에는 Vercel Pro Cron 또는 외부 스케줄러가 필요합니다.
+
 Between Days는 두 사람이 함께 사용하는 간단한 공유 캘린더 MVP입니다. Next.js App Router와 Route Handler로 화면과 REST API를 구성하고, Neon PostgreSQL을 데이터베이스로 사용합니다.
 
 운영 배포 URL: [https://shared-calendar-mu.vercel.app](https://shared-calendar-mu.vercel.app)
