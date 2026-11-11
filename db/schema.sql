@@ -63,30 +63,3 @@ CREATE TABLE IF NOT EXISTS dday_items (
 );
 
 CREATE INDEX IF NOT EXISTS dday_items_order_idx ON dday_items (sort_order, id);
-
-CREATE TABLE IF NOT EXISTS notification_reminders (
-  id BIGSERIAL PRIMARY KEY,
-  title VARCHAR(120) NOT NULL,
-  body VARCHAR(500) NOT NULL,
-  scheduled_at TIMESTAMPTZ NOT NULL,
-  schedule_id BIGINT REFERENCES schedules(id) ON DELETE SET NULL,
-  claimed_at TIMESTAMPTZ,
-  sent_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX IF NOT EXISTS notification_reminders_due_idx ON notification_reminders (sent_at, scheduled_at);
-
-CREATE TABLE IF NOT EXISTS push_subscriptions (
-  id BIGSERIAL PRIMARY KEY,
-  endpoint TEXT NOT NULL UNIQUE,
-  p256dh TEXT NOT NULL,
-  auth TEXT NOT NULL,
-  user_agent VARCHAR(500),
-  device_platform VARCHAR(10) NOT NULL DEFAULT 'OTHER',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE UNIQUE INDEX IF NOT EXISTS push_subscriptions_endpoint_idx ON push_subscriptions (endpoint);
